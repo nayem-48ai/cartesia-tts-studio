@@ -1,86 +1,101 @@
 #!/usr/bin/env python3
-"""Cartesia TTS Studio - Flask backend.
+"""TNxBD Studio - Flask backend.
 
 Serves a professional web UI and a JSON API backed by Cartesia's Sonic models.
-Languages: Bangla (bn), English (en), Hindi (hi).
+Supports 40+ languages. The voice catalog is embedded statically so /api/voices
+is instant and needs no outbound call; only TTS hits Cartesia.
 """
 import json
-import re
+import os
 import threading
+import time
 import urllib.request
+import urllib.error
 from flask import Flask, request, Response, render_template
 
 app = Flask(__name__)
 
 TOKEN_URL = "https://backend.cartesia.ai/access-token/public"
 TTS_URL = "https://api.cartesia.ai/tts/bytes"
-CATALOG_URL = ("https://www.cartesia.ai/_astro/voices-catalog.C5Lr5Mrb.js"
-               "?dpl=dpl_Cmdf7RW7WxQphKmqQx2WxqzC1XhH")
 API_VERSION = "2026-03-01"
 
-# Model support matrix verified live against the API.
+# Model support matrix verified live per language (sonic-2/3/3.5/turbo).
 MODELS_BY_LANG = {
-    "bn": ["sonic-3.5", "sonic-3"],
-    "en": ["sonic-3.5", "sonic-3", "sonic-turbo", "sonic-2"],
-    "hi": ["sonic-3.5", "sonic-3", "sonic-turbo"],
+    "bn": ["sonic-3.5", "sonic-3"], "en": ["sonic-3.5", "sonic-3", "sonic-turbo", "sonic-2"],
+    "hi": ["sonic-3.5", "sonic-3", "sonic-turbo"], "es": ["sonic-3.5", "sonic-3", "sonic-turbo", "sonic-2"],
+    "fr": ["sonic-3.5", "sonic-3", "sonic-turbo", "sonic-2"], "de": ["sonic-3.5", "sonic-3", "sonic-turbo", "sonic-2"],
+    "ar": ["sonic-3.5", "sonic-3"], "ja": ["sonic-3.5", "sonic-3", "sonic-turbo", "sonic-2"],
+    "ko": ["sonic-3.5", "sonic-3", "sonic-turbo", "sonic-2"], "pt": ["sonic-3.5", "sonic-3", "sonic-turbo", "sonic-2"],
+    "it": ["sonic-3.5", "sonic-3"], "nl": ["sonic-3.5", "sonic-3"], "pl": ["sonic-3.5", "sonic-3"],
+    "zh": ["sonic-3.5", "sonic-3", "sonic-turbo", "sonic-2"], "ru": ["sonic-3.5", "sonic-3"],
+    "sv": ["sonic-3.5", "sonic-3"], "te": ["sonic-3.5", "sonic-3"], "tl": ["sonic-3.5", "sonic-3"],
+    "tr": ["sonic-3.5", "sonic-3"], "ta": ["sonic-3.5", "sonic-3"], "th": ["sonic-3.5", "sonic-3"],
+    "cs": ["sonic-3.5", "sonic-3"], "fi": ["sonic-3.5", "sonic-3"], "da": ["sonic-3.5", "sonic-3"],
+    "vi": ["sonic-3.5", "sonic-3"], "hu": ["sonic-3.5", "sonic-3"], "bg": ["sonic-3.5", "sonic-3"],
+    "el": ["sonic-3.5", "sonic-3"], "gu": ["sonic-3.5", "sonic-3"], "hr": ["sonic-3.5", "sonic-3"],
+    "id": ["sonic-3.5", "sonic-3"], "ka": ["sonic-3.5", "sonic-3"], "kn": ["sonic-3.5", "sonic-3"],
+    "ml": ["sonic-3.5", "sonic-3"], "mr": ["sonic-3.5", "sonic-3"], "ms": ["sonic-3.5", "sonic-3"],
+    "no": ["sonic-3.5", "sonic-3"], "pa": ["sonic-3.5", "sonic-3"], "ro": ["sonic-3.5", "sonic-3"],
+    "sk": ["sonic-3.5", "sonic-3"], "uk": ["sonic-3.5", "sonic-3"], "he": ["sonic-3.5", "sonic-3"],
 }
-DEFAULT_VOICE = {
-    "bn": "2ba861ea-7cdc-43d1-8608-4045b5a41de5",  # Rubel - City Guide
-    "en": "a0e99841-438c-4a64-b679-ae501e7d6091",  # Greg - Supporter
-    "hi": "f91ab3e6-5071-4e15-b016-cde6f2bcd222",  # Aadhya - Soother
-}
-LANG_NAMES = {"bn": "Bangla", "en": "English", "hi": "Hindi"}
 
-_voices_cache = {"data": None, "ts": 0}
-_voices_lock = threading.Lock()
+LANG_DISPLAY = {
+    "bn": "বাংলা", "en": "English", "hi": "हिन्दी", "es": "Spanish", "fr": "French",
+    "de": "German", "ar": "Arabic", "ja": "Japanese", "ko": "Korean", "pt": "Portuguese",
+    "it": "Italian", "nl": "Dutch", "pl": "Polish", "zh": "Chinese", "ru": "Russian",
+    "sv": "Swedish", "te": "Telugu", "tl": "Tagalog", "tr": "Turkish", "ta": "Tamil",
+    "th": "Thai", "cs": "Czech", "fi": "Finnish", "da": "Danish", "vi": "Vietnamese",
+    "hu": "Hungarian", "bg": "Bulgarian", "el": "Greek", "gu": "Gujarati", "hr": "Croatian",
+    "id": "Indonesian", "ka": "Georgian", "kn": "Kannada", "ml": "Malayalam", "mr": "Marathi",
+    "ms": "Malay", "no": "Norwegian", "pa": "Punjabi", "ro": "Romanian", "sk": "Slovak",
+    "uk": "Ukrainian", "he": "Hebrew",
+}
+DEFAULT_NAME = {
+    "bn": "Rubel - City Guide", "en": "Greg - Supporter", "hi": "Aadhya - Soother",
+}
+
+# ---- Embedded voice catalog (static -> no outbound call on /api/voices) ----
+_HERE = os.path.dirname(os.path.abspath(__file__))
+try:
+    with open(os.path.join(_HERE, "voices.json"), encoding="utf-8") as _f:
+        VOICES = json.load(_f)
+except Exception:
+    VOICES = {}
+
+DEFAULT_VOICE = {}
+for _l, _vs in VOICES.items():
+    if not _vs:
+        continue
+    _pref = next((v["id"] for v in _vs if v.get("name") == DEFAULT_NAME.get(_l)), None)
+    DEFAULT_VOICE[_l] = _pref or _vs[0]["id"]
+
+# ---- Token cache (avoid a mint round-trip on every TTS request) ----
+_token_cache = {"token": None, "ts": 0.0}
+_token_lock = threading.Lock()
 
 
 def get_token() -> str:
+    now = time.time()
+    with _token_lock:
+        if _token_cache["token"] and now - _token_cache["ts"] < 50:
+            return _token_cache["token"]
     with urllib.request.urlopen(TOKEN_URL, timeout=10) as r:
-        return json.load(r)["token"]
-
-
-def load_voices():
-    """Fetch and parse the public voice catalog (cached in memory)."""
-    with _voices_lock:
-        import time
-        if _voices_cache["data"] and time.time() - _voices_cache["ts"] < 3600:
-            return _voices_cache["data"]
-    try:
-        js = urllib.request.urlopen(CATALOG_URL, timeout=15).read().decode()
-        rows = re.findall(
-            r'id:`([0-9a-f-]{36})`,name:`([^`]*)`,gender:`([^`]*)`,'
-            r'language:`([^`]*)`', js)
-        by_lang = {}
-        for i, n, g, l in rows:
-            by_lang.setdefault(l, []).append(
-                {"id": i, "name": n, "gender": g})
-        with _voices_lock:
-            _voices_cache["data"] = by_lang
-            _voices_cache["ts"] = time.time()
-        return by_lang
-    except Exception:
-        # Fallback snapshot if the catalog is unreachable.
-        return {
-            "bn": [
-                {"id": "59ba7dee-8f9a-432f-a6c0-ffb33666b654",
-                 "name": "Pooja - Everyday Assistant", "gender": "feminine"},
-                {"id": "2ba861ea-7cdc-43d1-8608-4045b5a41de5",
-                 "name": "Rubel - City Guide", "gender": "masculine"},
-            ],
-            "en": [{"id": "a0e99841-438c-4a64-b679-ae501e7d6091",
-                    "name": "Greg - Supporter", "gender": "masculine"}],
-            "hi": [{"id": "f91ab3e6-5071-4e15-b016-cde6f2bcd222",
-                    "name": "Aadhya - Soother", "gender": "feminine"}],
-        }
+        t = json.load(r)["token"]
+    with _token_lock:
+        _token_cache["token"] = t
+        _token_cache["ts"] = time.time()
+    return t
 
 
 @app.route("/", methods=["GET"])
 def index():
-    return render_template("index.html",
-                           languages=LANG_NAMES,
-                           models=MODELS_BY_LANG,
-                           defaults=DEFAULT_VOICE)
+    return render_template("index.html")
+
+
+@app.route("/api/languages", methods=["GET"])
+def api_languages():
+    langs = [{"code": c, "name": LANG_DISPLAY.get(c, c)} for c in MODELS_BY_LANG]
+    return {"count": len(langs), "languages": langs}
 
 
 @app.route("/api/models", methods=["GET"])
@@ -93,7 +108,7 @@ def api_models():
 @app.route("/api/voices", methods=["GET"])
 def api_voices():
     lang = request.args.get("language", "en")
-    voices = load_voices().get(lang, [])
+    voices = VOICES.get(lang, [])
     return {"language": lang, "count": len(voices), "voices": voices}
 
 
@@ -139,7 +154,7 @@ def api_tts():
                               'attachment; filename="tts.mp3"'})
 
 
-# Convenience aliases matching the earlier README/API.
+# Convenience aliases matching the earlier API.
 @app.route("/tts", methods=["POST"])
 def tts_alias():
     return api_tts()
