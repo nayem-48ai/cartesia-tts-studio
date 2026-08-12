@@ -19,8 +19,27 @@ python app.py          # http://127.0.0.1:8080
 
 ## API example
 ```bash
-curl -X POST https://<your-app>.onrender.com/api/tts \
+curl -X POST https://<your-app>/api/tts \
   -H "Content-Type: application/json" \
   -d '{"language":"bn","model":"sonic-3.5","voice_id":"2ba861ea-7cdc-43d1-8608-4045b5a41de5","text":"আমি দেখলাম আপনি আমাদের নতুন সফটওয়্যার প্ল্যানটা দেখছিলেন।"}' \
   --output out.mp3
+```
+
+## Deployment
+- **Live (Vercel):** https://cartesia-tts-studio-ejmi4b90s-tnayem48s-projects.vercel.app
+  - Web UI + JSON API work for Bangla, English and Hindi.
+  - Deployed via `vercel.json` (`@vercel/python` builder running the Flask app).
+- **Render:** a free web-service was created, but Render's free build queue
+  repeatedly hit the 15-minute build timeout, so Vercel (fast builds) was used
+  instead. The same repo deploys to either host.
+
+### Deploy to Vercel (file API)
+```bash
+# vercel.json wraps app.py (Flask WSGI) as a serverless function
+curl -X POST https://api.vercel.com/v13/deployments \
+  -H "Authorization: Bearer $VERCEL_TOKEN" -H "Content-Type: application/json" \
+  -d '{"name":"cartesia-tts-studio","target":"production","version":2,
+       "builds":[{"src":"app.py","use":"@vercel/python"}],
+       "routes":[{"src":"/.*","dest":"app.py"}],
+       "files":[ ... base64 of app.py, requirements.txt, templates/index.html ... ]}'
 ```
