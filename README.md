@@ -1,8 +1,7 @@
 # TNxBD Studio
 
-A professional, multilingual AI text-to-speech web app backed by **Cartesia Sonic**
-models. Generate lifelike speech in **40+ languages** and download MP3 audio from a
-clean web UI or a simple JSON API.
+A professional, multilingual AI text-to-speech web app. Generate lifelike speech in
+**40+ languages** and download MP3 audio from a clean web UI or a simple JSON API.
 
 ## Live site
 
@@ -27,8 +26,12 @@ python app.py          # http://127.0.0.1:8080
 ```bash
 curl -X POST https://tnxbd-tts.vercel.app/api/tts \
   -H "Content-Type: application/json" \
-  -d '{"language":"bn","model":"sonic-3.5","voice_id":"2ba861ea-7cdc-43d1-8608-4045b5a41de5","text":"আমি দেখলাম আপনি আমাদের নতুন সফটওয়্যার প্ল্যানটা দেখছিলেন।"}' \
-  --output out.mp3
+  -d '{
+    "language": "bn",
+    "model": "sonic-3.5",
+    "voice_id": "59ba7dee-8f9a-432f-a6c0-ffb33666b654",
+    "text": "Your text here"
+  }'
 ```
 
 ## Deployment
@@ -38,6 +41,11 @@ curl -X POST https://tnxbd-tts.vercel.app/api/tts \
   (`vercel.json` wraps `app.py` as a serverless function).
 - **Render:** a free web-service was attempted, but Render's free build queue
   repeatedly hit the 15-minute build timeout, so Vercel (fast builds) is used.
+- **Custom domain:** add the domain in the Vercel project (dashboard or API), then
+  point DNS at Vercel — apex `A` → `76.76.21.21`, or subdomain `CNAME` →
+  `cname.vercel-dns.com`. SSL is automatic.
+- **SEO:** `robots.txt` + `sitemap.xml` are served, plus Open Graph / Twitter /
+  JSON-LD metadata for faster discovery.
 
 ### Deploy to Vercel (file API)
 ```bash

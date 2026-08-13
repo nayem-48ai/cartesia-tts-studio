@@ -89,7 +89,25 @@ def get_token() -> str:
 
 @app.route("/", methods=["GET"])
 def index():
-    return render_template("index.html")
+    return render_template("index.html", site_url=request.url_root.rstrip("/"))
+
+
+@app.route("/robots.txt", methods=["GET"])
+def robots():
+    body = "User-agent: *\nAllow: /\nSitemap: " + request.url_root.rstrip("/") + "/sitemap.xml\n"
+    return Response(body, mimetype="text/plain")
+
+
+@app.route("/sitemap.xml", methods=["GET"])
+def sitemap():
+    loc = request.url_root.rstrip("/") + "/"
+    xml = (
+        '<?xml version="1.0" encoding="UTF-8"?>\n'
+        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
+        f'  <url><loc>{loc}</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>\n'
+        "</urlset>\n"
+    )
+    return Response(xml, mimetype="application/xml")
 
 
 @app.route("/api/languages", methods=["GET"])
@@ -147,7 +165,7 @@ def api_tts():
         with urllib.request.urlopen(req, timeout=120) as r:
             audio = r.read()
     except urllib.error.HTTPError as e:
-        return {"error": f"cartesia {e.code}: {e.read().decode()[:300]}"}, 502
+        return {"error": f"TTS error {e.code}: {e.read().decode()[:300]}"}, 502
 
     return Response(audio, mimetype="audio/mpeg",
                     headers={"Content-Disposition":
