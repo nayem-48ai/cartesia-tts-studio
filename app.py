@@ -11,6 +11,12 @@ import threading
 import time
 import urllib.request
 import urllib.error
+import hmac
+import hashlib
+import base64
+import random
+import secrets
+import operator
 from flask import Flask, request, Response, render_template
 
 app = Flask(__name__)
@@ -85,6 +91,99 @@ def get_token() -> str:
         _token_cache["token"] = t
         _token_cache["ts"] = time.time()
     return t
+
+
+# ---- Lightweight human-verification gate (math challenge -> signed token) ----
+# The answer lives only server-side (signed into the challenge token). The
+# TTS endpoint requires a short-lived access token that is only issued after
+# the challenge is solved, so the working API call can never be recovered from
+# the page source alone.
+APP_SECRET = os.environ.get("APP_SECRET", "tnxbd-studio-vercel-gate-2026")
+_CHALLENGE_TTL = 600
+_ACCESS_TTL = 600
+_OPS = {"+": operator.add, "\u2212": operator.sub, "\u00d7": operator.mul, "\u00f7": operator.truediv}
+
+
+def _b64e(b):
+    return base64.urlsafe_b64encode(b).rstrip(b"=").decode()
+
+
+def _b64d(s):
+    return base64.urlsafe_b64decode(s + "=" * (-len(s) % 4))
+
+
+def _sign(payload):
+    body = _b64e(json.dumps(payload).encode())
+    sig = hmac.new(APP_SECRET.encode(), body.encode(), hashlib.sha256).hexdigest()
+    return f"{body}.{sig}"
+
+
+def _unsign(token):
+    try:
+        body, sig = token.split(".", 1)
+        expect = hmac.new(APP_SECRET.encode(), body.encode(), hashlib.sha256).hexdigest()
+        if not hmac.compare_digest(expect, sig):
+            return None
+        payload = json.loads(_b64d(body))
+        if payload.get("exp", 0) < time.time():
+            return None
+        return payload
+    except Exception:
+        return None
+
+
+def _gen_challenge():
+    sym = random.choice(["+", "\u2212", "\u00d7", "\u00f7"])
+    if sym == "\u00f7":
+        b = random.randint(1, 9)
+        ans = random.randint(1, 9)
+        a = b * ans
+        question = f"{a} \u00f7 {b}"
+    elif sym == "\u2212":
+        a, b = random.randint(1, 9), random.randint(1, 9)
+        if b > a:
+            a, b = b, a
+        question = f"{a} \u2212 {b}"
+        ans = a - b
+    elif sym == "\u00d7":
+        a, b = random.randint(1, 9), random.randint(1, 9)
+        question = f"{a} \u00d7 {b}"
+        ans = a * b
+    else:
+        a, b = random.randint(1, 9), random.randint(1, 9)
+        question = f"{a} + {b}"
+        ans = a + b
+    token = _sign({"ans": ans, "exp": int(time.time()) + _CHALLENGE_TTL, "n": secrets.token_hex(4)})
+    return {"question": question, "token": token}
+
+
+def _require_access():
+    tok = (request.headers.get("X-Access-Token")
+           or request.args.get("token")
+           or (request.get_json(force=True, silent=True) or {}).get("token"))
+    p = _unsign(tok or "")
+    return bool(p) and p.get("exp", 0) > time.time()
+
+
+@app.route("/api/challenge", methods=["GET"])
+def api_challenge():
+    return _gen_challenge()
+
+
+@app.route("/api/challenge/verify", methods=["POST"])
+def api_challenge_verify():
+    data = request.get_json(force=True, silent=True) or {}
+    payload = _unsign(data.get("token") or "")
+    if not payload:
+        return {"error": "Invalid or expired challenge. Request a new one."}, 400
+    try:
+        answer = int(str(data.get("answer", "")).strip())
+    except (ValueError, TypeError):
+        return {"error": "Please enter a number."}, 400
+    if answer != payload.get("ans"):
+        return {"error": "Incorrect answer. Try again."}, 400
+    access = _sign({"exp": int(time.time()) + _ACCESS_TTL, "n": secrets.token_hex(4)})
+    return {"access": access, "ttl": _ACCESS_TTL}
 
 
 @app.route("/", methods=["GET"])

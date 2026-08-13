@@ -64,21 +64,24 @@
     .logo-mark { animation: logoGlow 3.4s ease-in-out infinite; transition: transform .25s ease; }
     .logo-wrap:hover .logo-mark { transform: rotate(-6deg) scale(1.06); }
 
-    /* Feature cards hover + animated icons */
-    @keyframes floaty { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
-    .feature-card { transition: transform .25s ease, box-shadow .25s ease, border-color .25s ease; }
-    .feature-card:hover { transform: translateY(-5px); box-shadow: 0 20px 45px -20px rgba(99,102,241,.5); border-color: rgba(99,102,241,.45); }
-    .feature-card .ficon { animation: floaty 4.5s ease-in-out infinite; transition: transform .25s ease, color .25s ease; }
-    .feature-card:hover .ficon { transform: scale(1.14) rotate(-4deg); color: #4f46e5; }
+    /* Feature cards: pro hover + icon bounce */
+    @keyframes bounceIcon { 0%,100%{transform:translateY(0)} 30%{transform:translateY(-9px)} 55%{transform:translateY(0)} 75%{transform:translateY(-4px)} }
+    .feature-card { position: relative; overflow: hidden; transition: transform .3s cubic-bezier(.2,.8,.2,1), box-shadow .3s ease, border-color .3s ease; }
+    .feature-card:hover { transform: translateY(-6px); box-shadow: 0 22px 50px -22px rgba(99,102,241,.55); border-color: rgba(99,102,241,.5); }
+    .feature-card::before { content:''; position:absolute; left:0; top:0; height:3px; width:100%; background:linear-gradient(90deg,#6366f1,#10b981); transform:scaleX(0); transform-origin:left; transition:transform .35s ease; }
+    .feature-card:hover::before { transform:scaleX(1); }
+    .feature-card .ficon { transition: transform .3s ease, color .3s ease; }
+    .feature-card:hover .ficon { animation: bounceIcon .75s ease; color: #4f46e5; }
     .feature-card:nth-child(2):hover .ficon { color: #059669; }
+    .feature-card:nth-child(3):hover .ficon { color: #4f46e5; }
 
-    /* Expandable voice details */
-    details.vdetail > summary { list-style: none; cursor: pointer; }
-    details.vdetail > summary::-webkit-details-marker { display: none; }
-    details.vdetail .chev { transition: transform .25s ease; }
-    details.vdetail[open] .chev { transform: rotate(180deg); }
+    /* Expandable sections */
+    details.vdetail > summary, details.apidetails > summary { list-style: none; cursor: pointer; }
+    details.vdetail > summary::-webkit-details-marker, details.apidetails > summary::-webkit-details-marker { display: none; }
+    details .chev { transition: transform .25s ease; }
+    details[open] .chev { transform: rotate(180deg); }
     @keyframes fadeDown { 0%{opacity:0;transform:translateY(-6px)} 100%{opacity:1;transform:translateY(0)} }
-    details.vdetail[open] .vbody { animation: fadeDown .2s ease-out; }
+    details[open] .vbody, details[open] .apibody { animation: fadeDown .2s ease-out; }
   </style>
   <script type="application/ld+json">
   {
@@ -146,10 +149,6 @@
       </p>
       <svg class="mx-auto mt-7 w-44 h-12 text-brand-500/70" viewBox="0 0 200 40" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
         <g class="soundwave">
-          <line x1="10" y1="20" x2="10" y2="20"/>
-          <line x1="24" y1="20" x2="24" y2="20"/>
-        </g>
-        <g class="soundwave" style="transform-origin:center">
           <line x1="20" y1="14" x2="20" y2="26"/>
           <line x1="40" y1="8"  x2="40" y2="32"/>
           <line x1="60" y1="4"  x2="60" y2="36"/>
@@ -233,31 +232,60 @@
         <div id="errorBox" class="mt-4 hidden rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-700 dark:text-red-300"></div>
       </div>
 
-      <!-- API section (separate from main TTS) -->
+      <!-- API section (expandable, captcha-gated curl) -->
       <section class="mt-8 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-lg p-5 sm:p-7">
-        <div class="flex items-center gap-2.5 mb-4">
-          <svg class="w-6 h-6 text-brand-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 6L3 12l5 6M16 6l5 6-5 6M14 4l-4 16" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          <h2 class="text-lg font-bold">Developer API</h2>
-          <span class="ml-auto text-xs font-semibold text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-full">POST /api/tts</span>
-        </div>
-        <div>
-          <div class="flex items-center justify-between mb-1.5">
-            <span class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Request</span>
-            <button id="copyCurl" class="inline-flex items-center gap-1 text-xs font-semibold text-brand-600 dark:text-brand-300 hover:text-brand-700 px-2 py-1 rounded-lg hover:bg-brand-50 dark:hover:bg-slate-800 transition-colors cursor-pointer">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10" stroke-linecap="round"/></svg>
-              Copy
-            </button>
-          </div>
-          <pre class="text-xs bg-slate-900 text-slate-100 rounded-xl p-4 overflow-x-auto"><code id="apiSnippet"></code></pre>
-        </div>
-        <div class="mt-3">
-          <span class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Response</span>
-          <pre class="mt-1.5 text-xs bg-slate-900 text-slate-100 rounded-xl p-4 overflow-x-auto"><code># Success → HTTP 200, audio/mpeg (binary MP3, auto-download)
+        <details id="apiDetails" class="apidetails group" open>
+          <summary class="flex items-center gap-2.5 text-slate-700 dark:text-slate-200">
+            <svg class="w-6 h-6 text-brand-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 6L3 12l5 6M16 6l5 6-5 6M14 4l-4 16" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <h2 class="text-lg font-bold">Developer API</h2>
+            <span class="ml-auto text-xs font-semibold text-slate-400 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-full">POST /api/tts</span>
+            <svg class="chev w-5 h-5 text-slate-400" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </summary>
+          <div class="apibody mt-4 space-y-4">
+            <!-- Security challenge -->
+            <div class="rounded-xl border border-amber-200 dark:border-amber-700/60 bg-amber-50 dark:bg-amber-900/20 p-4">
+              <div class="flex items-center justify-between">
+                <p class="text-xs font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">Security check</p>
+                <span id="verifyBadge" class="hidden inline-flex items-center gap-1 text-xs font-semibold text-cta-600 dark:text-cta-400">
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg> Verified
+                </span>
+              </div>
+              <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">Solve this to reveal the copy-ready cURL.</p>
+              <div class="mt-3 flex flex-wrap items-center gap-3">
+                <span id="challengeQ" class="text-lg font-bold text-slate-800 dark:text-slate-100 tabular-nums">—</span>
+                <input id="challengeA" type="text" inputmode="numeric" autocomplete="off" placeholder="?" class="w-16 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-center text-sm outline-none focus:ring-2 focus:ring-amber-400" />
+                <button id="verifyBtn" class="cursor-pointer inline-flex items-center gap-1.5 text-sm font-semibold text-white bg-amber-500 hover:bg-amber-600 px-3.5 py-2 rounded-lg transition-colors">Verify</button>
+                <button id="refreshChallenge" class="cursor-pointer text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 px-2 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="New challenge">New</button>
+                <span id="challengeStatus" class="text-sm font-medium"></span>
+              </div>
+            </div>
+            <!-- Locked / revealed -->
+            <div id="apiLocked" class="flex items-center gap-2 text-sm text-slate-400">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" stroke-linecap="round"/></svg>
+              Complete the security check above to view the request.
+            </div>
+            <div id="apiReveal" class="hidden space-y-3">
+              <div>
+                <div class="flex items-center justify-between mb-1.5">
+                  <span class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Request</span>
+                  <button id="copyCurl" class="inline-flex items-center gap-1 text-xs font-semibold text-brand-600 dark:text-brand-300 hover:text-brand-700 px-2 py-1 rounded-lg hover:bg-brand-50 dark:hover:bg-slate-800 transition-colors cursor-pointer">
+                    <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10" stroke-linecap="round"/></svg>
+                    Copy
+                  </button>
+                </div>
+                <pre class="text-xs bg-slate-900 text-slate-100 rounded-xl p-4 overflow-x-auto"><code id="apiSnippet"></code></pre>
+              </div>
+              <div>
+                <span class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Response</span>
+                <pre class="mt-1.5 text-xs bg-slate-900 text-slate-100 rounded-xl p-4 overflow-x-auto"><code># Success → HTTP 200, audio/mpeg (binary MP3, auto-download)
 # Error   → HTTP 4xx / 5xx, JSON body:
 {
   "error": "TTS error 400: voice not found"
 }</code></pre>
-        </div>
+              </div>
+            </div>
+          </div>
+        </details>
       </section>
 
       <!-- Expandable Voice details (below API) -->
@@ -301,10 +329,25 @@
           <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">POST JSON, get MP3. Drop it into any app or workflow.</p>
         </div>
       </div>
+
+      <!-- Developer info -->
+      <div class="mt-10 text-center">
+        <p class="text-sm text-slate-500 dark:text-slate-400">Developed by <span class="font-semibold text-slate-700 dark:text-slate-200">Torikul Islam Nayem</span></p>
+        <div class="mt-3 flex flex-wrap items-center justify-center gap-3">
+          <a href="https://torikul.zone.id/" target="_blank" rel="noreferrer" class="inline-flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-brand-400 hover:text-brand-600 dark:hover:border-brand-500 px-3.5 py-2 rounded-xl transition-colors">
+            <svg class="w-4 h-4 text-brand-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" stroke-linejoin="round"/></svg>
+            torikul.zone.id
+          </a>
+          <a href="https://nayem-48ai.github.io/Nayem/" target="_blank" rel="noreferrer" class="inline-flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-brand-400 hover:text-brand-600 dark:hover:border-brand-500 px-3.5 py-2 rounded-xl transition-colors">
+            <svg class="w-4 h-4 text-slate-700 dark:text-slate-300" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.34-1.3-1.7-1.3-1.7-1.06-.72.08-.7.08-.7 1.17.08 1.78 1.2 1.78 1.2 1.04 1.78 2.74 1.27 3.4.97.1-.75.4-1.27.73-1.56-2.56-.3-5.25-1.28-5.25-5.7 0-1.26.45-2.3 1.2-3.1-.13-.3-.52-1.48.1-3.1 0 0 .98-.31 3.2 1.18a11 11 0 0 1 5.82 0c2.22-1.5 3.2-1.18 3.2-1.18.63 1.62.24 2.8.12 3.1.75.8 1.2 1.84 1.2 3.1 0 4.43-2.7 5.4-5.27 5.69.42.36.8 1.08.8 2.18v3.23c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5Z"/></svg>
+            nayem-48ai.github.io/Nayem
+          </a>
+        </div>
+      </div>
     </div>
   </main>
 
-  <footer class="border-t border-slate-200 dark:border-slate-800 py-6 text-center text-sm text-slate-400">
+  <footer class="border-t border-slate-200 dark:border-t dark:border-slate-800 py-6 text-center text-sm text-slate-400">
     TNxBD Studio · Free multilingual AI voice generator · <span id="year"></span>
   </footer>
 
@@ -336,8 +379,14 @@
           <p class="text-xs text-slate-400 mt-1">Name: Torikul Islam Nayem</p>
         </div>
         <div class="rounded-xl border border-slate-200 dark:border-slate-700 p-3">
-          <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide">USDT (TRC-20 / ERC-20)</p>
-          <p id="usdtAddr" class="mt-1 text-sm font-semibold font-mono text-slate-700 dark:text-slate-200 break-all">Will be added soon</p>
+          <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide">USDT (BSC Network)</p>
+          <div class="mt-1 flex items-center justify-between gap-2">
+            <p id="usdtAddr" class="text-sm font-semibold font-mono text-slate-700 dark:text-slate-200 break-all">0x31f51ad01e9efacb4d6cb9ba03ed624d1c637</p>
+            <button id="copyUsdt" class="shrink-0 inline-flex items-center gap-1 text-xs font-semibold text-brand-600 dark:text-brand-300 hover:text-brand-700 px-2 py-1 rounded-lg hover:bg-brand-50 dark:hover:bg-slate-800 cursor-pointer">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10" stroke-linecap="round"/></svg>
+              Copy
+            </button>
+          </div>
         </div>
       </div>
       <p class="mt-4 text-center text-xs text-slate-400">Thank you for your support!</p>
@@ -426,6 +475,43 @@
       $('voiceName').textContent = opt ? opt.textContent.split(' · ')[0] : '—';
       $('voiceGender').textContent = opt ? (opt.dataset.gender || '—') : '—';
       $('voiceId').textContent = sel.value;
+    }
+
+    // ---- Captcha-gated API documentation ----
+    let challengeToken = '';
+    const VFY_KEY = 'tnxbd_vfy';
+    function setVerified(ttl) { try { localStorage.setItem(VFY_KEY, JSON.stringify({ exp: Date.now() + ttl * 1000 })); } catch (e) {} }
+    function isVerified() { try { const v = JSON.parse(localStorage.getItem(VFY_KEY) || '{}'); return v.exp && v.exp > Date.now() + 8000; } catch (e) { return false; } }
+    function revealApi() {
+      $('apiLocked').classList.add('hidden');
+      $('apiReveal').classList.remove('hidden');
+      $('verifyBadge').classList.remove('hidden');
+      updateSnippet();
+    }
+    async function loadChallenge() {
+      try {
+        const r = await fetch('/api/challenge').then(x => x.json());
+        challengeToken = r.token;
+        $('challengeQ').textContent = r.question + ' = ?';
+        $('challengeA').value = '';
+        $('challengeStatus').textContent = '';
+        $('challengeStatus').className = 'text-sm font-medium';
+      } catch (e) { $('challengeQ').textContent = '? + ? = ?'; }
+    }
+    async function verifyChallenge() {
+      const ans = $('challengeA').value.trim();
+      if (!ans) { $('challengeStatus').textContent = 'Enter the answer.'; $('challengeStatus').className = 'text-sm font-medium text-amber-600 dark:text-amber-400'; return; }
+      try {
+        const r = await fetch('/api/challenge/verify', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: challengeToken, answer: ans })
+        }).then(x => x.json());
+        if (r.error) { $('challengeStatus').textContent = r.error; $('challengeStatus').className = 'text-sm font-medium text-red-500'; return; }
+        $('challengeStatus').textContent = 'Verified ✓';
+        $('challengeStatus').className = 'text-sm font-medium text-cta-600 dark:text-cta-400';
+        setVerified(r.ttl || 600);
+        revealApi();
+      } catch (e) { $('challengeStatus').textContent = 'Network error.'; }
     }
 
     function copyText(text, btn, label) {
@@ -525,6 +611,9 @@
     });
     $('modelSel').addEventListener('change', updateSnippet);
     $('voiceSel').addEventListener('change', () => { updateSnippet(); updateVoiceInfo(); });
+    $('verifyBtn').addEventListener('click', verifyChallenge);
+    $('refreshChallenge').addEventListener('click', loadChallenge);
+    $('challengeA').addEventListener('keydown', (e) => { if (e.key === 'Enter') verifyChallenge(); });
 
     // theme
     const themeBtn = $('themeBtn');
@@ -540,6 +629,7 @@
     $('copyCurl').addEventListener('click', () => copyText($('apiSnippet').textContent, $('copyCurl'), 'Copy'));
     $('copyVoiceId').addEventListener('click', () => copyText($('voiceId').textContent, $('copyVoiceId'), 'Copy ID'));
     $('copyBinance').addEventListener('click', () => copyText($('binanceId').textContent, $('copyBinance'), 'Copy'));
+    $('copyUsdt').addEventListener('click', () => copyText($('usdtAddr').textContent, $('copyUsdt'), 'Copy'));
 
     // support modal
     const modal = $('supportModal');
@@ -551,6 +641,8 @@
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
 
     $('year').textContent = new Date().getFullYear();
+    // init captcha state
+    if (isVerified()) { revealApi(); } else { loadChallenge(); }
     loadLanguages();
   </script>
 </body>
