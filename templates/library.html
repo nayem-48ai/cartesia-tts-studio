@@ -1,0 +1,139 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Voice Library — TNxBD Studio</title>
+    <meta name="description" content="Browse 868+ AI voices with name, description and voice ID. Search by name, ID or description and filter by gender, language and tag. Copy any voice ID for the TTS API." />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://speakee.tnxbd.top/library" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Voice Library — TNxBD Studio" />
+    <meta property="og:description" content="Search and filter 868+ AI voices by name, ID, gender, language and tag. Copy voice IDs for the TTS API." />
+    <meta property="og:url" content="https://speakee.tnxbd.top/library" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+    <script>
+      tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'] }, colors: { brand: { 50:'#eef2ff',100:'#e0e7ff',200:'#c7d2fe',300:'#a5b4fc',400:'#818cf8',500:'#6366f1',600:'#4f46e5',700:'#4338ca',800:'#3730a3',900:'#312e81' }, cta: { 400:'#34d399',500:'#10b981',600:'#059669' } } } } }
+      try { if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark'); } catch (e) {}
+    </script>
+    <style> body { font-family: '"Plus Jakarta Sans"', system-ui, sans-serif; } </style>
+  </head>
+  <body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 min-h-screen">
+    <nav class="sticky top-0 z-40 backdrop-blur bg-white/80 dark:bg-slate-950/80 border-b border-slate-200 dark:border-slate-800">
+      <div class="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
+        <a href="/" class="flex items-center gap-2">
+          <svg class="w-7 h-7 text-brand-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3Z"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v3"/></svg>
+          <span class="font-extrabold text-lg tracking-tight">TNxBD <span class="text-brand-500">Studio</span></span>
+        </a>
+        <div class="flex items-center gap-2">
+          <a href="/library" class="text-sm font-semibold text-brand-600 dark:text-brand-300 px-3 py-1.5 rounded-lg bg-brand-50 dark:bg-brand-900/40">Voice Library</a>
+          <a href="https://github.com" target="_blank" rel="nofollow noopener noreferrer" class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 px-3 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">GitHub</a>
+          <button id="themeBtn" class="w-9 h-9 grid place-items-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer" aria-label="Toggle theme">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" stroke-linejoin="round"/></svg>
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <main class="max-w-5xl mx-auto px-4 py-8">
+      <h1 class="text-2xl sm:text-3xl font-extrabold tracking-tight">Voice Library</h1>
+      <p class="mt-2 text-slate-600 dark:text-slate-400">Browse <span id="totalCount" class="font-semibold text-slate-700 dark:text-slate-200">—</span> AI voices. Search by name, ID or description, filter by gender, language and tag, then copy any voice ID for the TTS API.</p>
+
+      <div class="mt-6 grid sm:grid-cols-[1fr_auto_auto_auto] gap-3 items-end">
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Search</label>
+          <input id="search" type="text" placeholder="Name, ID, description or keyword…" autocomplete="off" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2.5 text-sm focus:ring-2 focus:ring-brand-400 outline-none" />
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Gender</label>
+          <select id="fGender" class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2.5 text-sm focus:ring-2 focus:ring-brand-400 outline-none cursor-pointer"></select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Language</label>
+          <select id="fLang" class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2.5 text-sm focus:ring-2 focus:ring-brand-400 outline-none cursor-pointer"></select>
+        </div>
+        <div>
+          <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Tag</label>
+          <select id="fTag" class="rounded-xl border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-900 px-3 py-2.5 text-sm focus:ring-2 focus:ring-brand-400 outline-none cursor-pointer"></select>
+        </div>
+      </div>
+
+      <p id="resultCount" class="mt-3 text-sm text-slate-400"></p>
+      <div id="grid" class="mt-4 grid sm:grid-cols-2 gap-3"></div>
+    </main>
+
+    <script>
+      const $ = (id) => document.getElementById(id);
+      let ALL = [], LANG_NAMES = {};
+      const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+      const copyText = (text, btn) => navigator.clipboard.writeText(text).then(() => { const o = btn.textContent; btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = o, 1400); }).catch(() => {});
+
+      async function init() {
+        try { const r = await fetch('/api/languages').then(x => x.json()); (r.languages || []).forEach(l => LANG_NAMES[l.code] = l.name); } catch (e) {}
+        const lib = await fetch('/api/library').then(x => x.json());
+        ALL = lib.voices || [];
+        $('totalCount').textContent = ALL.length;
+        populateFilters();
+        render();
+        ['search','fGender','fLang','fTag'].forEach(id => $(id).addEventListener('input', render));
+        $('themeBtn').addEventListener('click', () => {
+          const dark = document.documentElement.classList.toggle('dark');
+          try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch (e) {}
+        });
+      }
+
+      function populateFilters() {
+        const genders = ['All', ...Array.from(new Set(ALL.map(v => v.gender || 'Unknown')))];
+        const langs = ['All', ...Array.from(new Set(ALL.map(v => v.language))).sort()];
+        const tags = ['All', ...Array.from(new Set(ALL.map(v => v.tag)))];
+        const fill = (sel, vals) => { sel.innerHTML = ''; vals.forEach(v => { const o = document.createElement('option'); o.value = v; o.textContent = (v === 'All') ? 'All' : (v === 'language' ? 'Language' : (LANG_NAMES[v] ? LANG_NAMES[v] + ' (' + v + ')' : v)); sel.appendChild(o); }); };
+        fill($('fGender'), genders);
+        fill($('fLang'), langs);
+        fill($('fTag'), tags);
+      }
+
+      function render() {
+        const q = $('search').value.trim().toLowerCase();
+        const g = $('fGender').value, l = $('fLang').value, t = $('fTag').value;
+        const rows = ALL.filter(v => {
+          if (g !== 'All' && (v.gender || 'Unknown') !== g) return false;
+          if (l !== 'All' && v.language !== l) return false;
+          if (t !== 'All' && v.tag !== t) return false;
+          if (q) {
+            const hay = [v.name, v.id, v.description, v.language, v.tag, v.gender, v.mode, v.country].join(' ').toLowerCase();
+            if (!hay.includes(q)) return false;
+          }
+          return true;
+        });
+        $('resultCount').textContent = rows.length + ' voice' + (rows.length === 1 ? '' : 's') + ' found';
+        const grid = $('grid'); grid.innerHTML = '';
+        rows.forEach(v => {
+          const card = document.createElement('div');
+          card.className = 'rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 flex flex-col gap-2';
+          card.innerHTML =
+            '<div class="flex items-start justify-between gap-3">' +
+              '<div class="min-w-0">' +
+                '<h3 class="font-semibold text-slate-800 dark:text-slate-100 truncate">' + esc(v.name) + '</h3>' +
+                '<p class="mt-0.5 text-sm text-slate-500 dark:text-slate-400 line-clamp-2">' + esc(v.description || 'No description.') + '</p>' +
+              '</div>' +
+              '<button class="shrink-0 inline-flex items-center gap-1 text-xs font-semibold text-brand-600 dark:text-brand-300 hover:text-brand-700 px-2 py-1 rounded-lg hover:bg-brand-50 dark:hover:bg-slate-800 cursor-pointer" data-id="' + esc(v.id) + '">Copy ID</button>' +
+            '</div>' +
+            '<div class="flex flex-wrap gap-1.5">' +
+              '<span class="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[11px] font-medium text-slate-600 dark:text-slate-300">' + esc(v.gender || 'Unknown') + '</span>' +
+              '<span class="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[11px] font-medium text-slate-600 dark:text-slate-300">' + esc(LANG_NAMES[v.language] || v.language) + '</span>' +
+              '<span class="px-2 py-0.5 rounded-full bg-cta-50 dark:bg-cta-600/15 text-[11px] font-medium text-cta-700 dark:text-cta-400">' + esc(v.tag) + '</span>' +
+            '</div>' +
+            '<code class="text-[11px] font-mono text-slate-400 break-all">' + esc(v.id) + '</code>';
+          grid.appendChild(card);
+        });
+        grid.querySelectorAll('button[data-id]').forEach(b => b.addEventListener('click', () => copyText(b.dataset.id, b)));
+      }
+
+      init();
+    </script>
+  </body>
+</html>
