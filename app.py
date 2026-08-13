@@ -17,9 +17,20 @@ import base64
 import random
 import secrets
 import operator
-from flask import Flask, request, Response, render_template
+from flask import Flask, request, Response, render_template, redirect
 
 app = Flask(__name__)
+
+# Only the custom domain is public; redirect every other host (vercel.app defaults,
+# auto deployment URLs, etc.) to speakee.tnxbd.top so a single canonical site exists.
+CANONICAL_HOST = "speakee.tnxbd.top"
+ALLOWED_HOSTS = {CANONICAL_HOST, "localhost", "127.0.0.1"}
+
+@app.before_request
+def enforce_canonical_host():
+    host = request.host.split(":")[0]
+    if host not in ALLOWED_HOSTS:
+        return redirect("https://" + CANONICAL_HOST + request.full_path, code=301)
 
 TOKEN_URL = "https://backend.cartesia.ai/access-token/public"
 TTS_URL = "https://api.cartesia.ai/tts/bytes"
