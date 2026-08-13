@@ -3,9 +3,9 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>TNxBD Studio — Free Multilingual AI Text to Speech (TTS)</title>
-  <meta name="description" content="TNxBD Studio is a free multilingual AI text-to-speech studio. Convert text into natural MP3 audio in 40+ languages — Bangla, English, Hindi, Spanish, French, Arabic, Japanese, Korean, Chinese and more. No API key required." />
-  <meta name="keywords" content="text to speech, TTS, AI voice generator, Bangla TTS, Hindi TTS, English TTS, multilingual TTS, free TTS API, voice cloning alternative, MP3 speech synthesis, Bengali voice, Spanish voice generator, French TTS, Arabic TTS, Japanese TTS, neural text to speech" />
+  <title>TNxBD Studio — Free AI Text to Speech (TTS) | 40+ Languages MP3 Voice Generator</title>
+  <meta name="description" content="Free AI text-to-speech (TTS) studio. Convert text into natural MP3 audio in 40+ languages — Bangla, English, Hindi, Spanish, French, Arabic, Japanese, Korean, Chinese and more. No API key needed. Use the web UI or JSON API to generate studio-quality voiceovers." />
+  <meta name="keywords" content="text to speech, TTS, AI voice generator, free TTS, text to audio, AI narrator, voiceover generator, Bangla TTS, Hindi TTS, English TTS, Spanish voice generator, French TTS, Arabic TTS, Japanese TTS, Korean TTS, Chinese TTS, multilingual TTS, MP3 speech synthesis, neural text to speech, online TTS, free voice generator, Cartesia TTS, Sonic 3.5" />
   <meta name="author" content="TNxBD Studio" />
   <meta name="robots" content="index, follow" />
   <meta name="theme-color" content="#6366f1" />
@@ -82,6 +82,16 @@
     details[open] .chev { transform: rotate(180deg); }
     @keyframes fadeDown { 0%{opacity:0;transform:translateY(-6px)} 100%{opacity:1;transform:translateY(0)} }
     details[open] .vbody, details[open] .apibody { animation: fadeDown .2s ease-out; }
+
+    /* Developer icon buttons */
+    @keyframes devFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-4px)} }
+    @keyframes devPulse { 0%{transform:scale(1);opacity:.5} 100%{transform:scale(1.6);opacity:0} }
+    .dev-btn { position: relative; transition: transform .3s ease, background-color .3s ease, color .3s ease, box-shadow .3s ease, border-color .3s ease; }
+    .dev-btn:hover { transform: translateY(-3px) scale(1.08); box-shadow: 0 12px 28px -12px rgba(99,102,241,.6); }
+    .dev-btn .dev-ico { transition: transform .3s ease; }
+    .dev-btn:hover .dev-ico { animation: devFloat .8s ease-in-out infinite; }
+    .dev-btn::after { content:''; position:absolute; inset:-2px; border-radius:9999px; border:2px solid rgba(99,102,241,.5); opacity:0; }
+    .dev-btn:hover::after { animation: devPulse 1.4s ease-out infinite; }
   </style>
   <script type="application/ld+json">
   {
@@ -94,6 +104,20 @@
     "operatingSystem": "Any",
     "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
     "featureList": ["40+ languages", "MP3 export", "JSON API", "Dark mode"]
+  }
+  </script>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {"@type":"Question","name":"What is TNxBD Studio?","acceptedAnswer":{"@type":"Answer","text":"TNxBD Studio is a free AI text-to-speech (TTS) studio that converts text into natural MP3 audio in 40+ languages, with no API key required."}},
+      {"@type":"Question","name":"Which languages are supported?","acceptedAnswer":{"@type":"Answer","text":"Over 40 languages including Bangla, English, Hindi, Spanish, French, Arabic, Japanese, Korean, Chinese, German, Portuguese, Russian, Italian, Dutch and more."}},
+      {"@type":"Question","name":"Is the text to speech service free?","acceptedAnswer":{"@type":"Answer","text":"Yes. TNxBD Studio is completely free to use from the web UI and also offers a simple JSON API for developers."}},
+      {"@type":"Question","name":"Can I download the generated audio as MP3?","acceptedAnswer":{"@type":"Answer","text":"Yes. Every generated clip can be downloaded as a high-quality MP3 file with a single click."}},
+      {"@type":"Question","name":"Do I need an API key to use the TTS API?","acceptedAnswer":{"@type":"Answer","text":"No API key is required. Send a JSON POST to the /api/tts endpoint with language, model, voice_id and text to receive MP3 audio."}},
+      {"@type":"Question","name":"How do I use TNxBD Studio as a voice generator?","acceptedAnswer":{"@type":"Answer","text":"Pick a language and voice, type or paste your script, click Generate Speech, then download the MP3. Developers can also call the REST API."}}
+    ]
   }
   </script>
 </head>
@@ -234,7 +258,7 @@
 
       <!-- API section (expandable, captcha-gated curl) -->
       <section class="mt-8 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-lg p-5 sm:p-7">
-        <details id="apiDetails" class="apidetails group" open>
+        <details id="apiDetails" class="apidetails acc group">
           <summary class="flex items-center gap-2.5 text-slate-700 dark:text-slate-200">
             <svg class="w-6 h-6 text-brand-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 6L3 12l5 6M16 6l5 6-5 6M14 4l-4 16" stroke-linecap="round" stroke-linejoin="round"/></svg>
             <h2 class="text-lg font-bold">Developer API</h2>
@@ -289,7 +313,7 @@
       </section>
 
       <!-- Expandable Voice details (below API) -->
-      <details class="vdetail mt-6 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-lg p-5 sm:p-7" open>
+      <details class="vdetail acc mt-6 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-lg p-5 sm:p-7">
         <summary class="flex items-center gap-2.5 text-slate-700 dark:text-slate-200">
           <svg class="w-6 h-6 text-cta-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M12 2a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3Z" stroke-linejoin="round"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v3" stroke-linecap="round"/></svg>
           <h2 class="text-lg font-bold">Selected voice details</h2>
@@ -330,17 +354,44 @@
         </div>
       </div>
 
+      <!-- FAQ (SEO) -->
+      <section class="mt-10">
+        <h2 class="text-xl font-bold text-center text-slate-800 dark:text-slate-100">Frequently asked questions</h2>
+        <div class="mt-5 space-y-3">
+          <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+            <h3 class="font-semibold text-slate-800 dark:text-slate-100">What is TNxBD Studio?</h3>
+            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">A free AI text-to-speech (TTS) studio that turns text into natural MP3 audio using Cartesia's Sonic models — no signup or API key required.</p>
+          </div>
+          <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+            <h3 class="font-semibold text-slate-800 dark:text-slate-100">Which languages are supported?</h3>
+            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">40+ languages including Bangla, English, Hindi, Spanish, French, Arabic, Japanese, Korean, Chinese, German, Portuguese, Russian, Italian and Dutch.</p>
+          </div>
+          <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+            <h3 class="font-semibold text-slate-800 dark:text-slate-100">Is the text to speech service free?</h3>
+            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Yes. TNxBD Studio is completely free to use from the web UI and offers a simple JSON API for developers.</p>
+          </div>
+          <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+            <h3 class="font-semibold text-slate-800 dark:text-slate-100">Can I download the audio as MP3?</h3>
+            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Yes. Every generated clip can be downloaded as a high-quality MP3 file with a single click.</p>
+          </div>
+          <div class="rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4">
+            <h3 class="font-semibold text-slate-800 dark:text-slate-100">Do I need an API key to use the TTS API?</h3>
+            <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">No API key is required. Send a JSON POST to the /api/tts endpoint with language, model, voice_id and text to receive MP3 audio.</p>
+          </div>
+        </div>
+      </section>
+
       <!-- Developer info -->
-      <div class="mt-10 text-center">
+      <div class="mt-10 flex flex-col items-center gap-3">
         <p class="text-sm text-slate-500 dark:text-slate-400">Developed by <span class="font-semibold text-slate-700 dark:text-slate-200">Torikul Islam Nayem</span></p>
-        <div class="mt-3 flex flex-wrap items-center justify-center gap-3">
-          <a href="https://torikul.zone.id/" target="_blank" rel="noreferrer" class="inline-flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-brand-400 hover:text-brand-600 dark:hover:border-brand-500 px-3.5 py-2 rounded-xl transition-colors">
-            <svg class="w-4 h-4 text-brand-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" stroke-linejoin="round"/></svg>
-            torikul.zone.id
+        <div class="flex items-center gap-3">
+          <a href="https://torikul.zone.id/" target="_blank" rel="noreferrer" title="torikul.zone.id"
+             class="dev-btn group relative w-12 h-12 grid place-items-center rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-brand-500 hover:text-white hover:bg-brand-500 hover:border-brand-500 shadow-sm">
+            <svg class="dev-ico w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" stroke-linejoin="round"/></svg>
           </a>
-          <a href="https://nayem-48ai.github.io/Nayem/" target="_blank" rel="noreferrer" class="inline-flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 hover:border-brand-400 hover:text-brand-600 dark:hover:border-brand-500 px-3.5 py-2 rounded-xl transition-colors">
-            <svg class="w-4 h-4 text-slate-700 dark:text-slate-300" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.34-1.3-1.7-1.3-1.7-1.06-.72.08-.7.08-.7 1.17.08 1.78 1.2 1.78 1.2 1.04 1.78 2.74 1.27 3.4.97.1-.75.4-1.27.73-1.56-2.56-.3-5.25-1.28-5.25-5.7 0-1.26.45-2.3 1.2-3.1-.13-.3-.52-1.48.1-3.1 0 0 .98-.31 3.2 1.18a11 11 0 0 1 5.82 0c2.22-1.5 3.2-1.18 3.2-1.18.63 1.62.24 2.8.12 3.1.75.8 1.2 1.84 1.2 3.1 0 4.43-2.7 5.4-5.27 5.69.42.36.8 1.08.8 2.18v3.23c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5Z"/></svg>
-            nayem-48ai.github.io/Nayem
+          <a href="https://nayem-48ai.github.io/Nayem/" target="_blank" rel="noreferrer" title="nayem-48ai.github.io/Nayem"
+             class="dev-btn group relative w-12 h-12 grid place-items-center rounded-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 text-slate-700 dark:text-slate-300 hover:text-white hover:bg-slate-800 hover:border-slate-800 shadow-sm">
+            <svg class="dev-ico w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.34-1.3-1.7-1.3-1.7-1.06-.72.08-.7.08-.7 1.17.08 1.78 1.2 1.78 1.2 1.04 1.78 2.74 1.27 3.4.97.1-.75.4-1.27.73-1.56-2.56-.3-5.25-1.28-5.25-5.7 0-1.26.45-2.3 1.2-3.1-.13-.3-.52-1.48.1-3.1 0 0 .98-.31 3.2 1.18a11 11 0 0 1 5.82 0c2.22-1.5 3.2-1.18 3.2-1.18.63 1.62.24 2.8.12 3.1.75.8 1.2 1.84 1.2 3.1 0 4.43-2.7 5.4-5.27 5.69.42.36.8 1.08.8 2.18v3.23c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5Z"/></svg>
           </a>
         </div>
       </div>
@@ -641,6 +692,12 @@
     document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
 
     $('year').textContent = new Date().getFullYear();
+    // accordion: only one details section open at a time
+    document.querySelectorAll('details.acc').forEach(d => {
+      d.addEventListener('toggle', () => {
+        if (d.open) document.querySelectorAll('details.acc').forEach(o => { if (o !== d) o.open = false; });
+      });
+    });
     // init captcha state
     if (isVerified()) { revealApi(); } else { loadChallenge(); }
     loadLanguages();
