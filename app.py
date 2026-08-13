@@ -193,13 +193,13 @@ def index():
 
 @app.route("/robots.txt", methods=["GET"])
 def robots():
-    body = "User-agent: *\nAllow: /\nSitemap: " + request.url_root.rstrip("/") + "/sitemap.xml\n"
+    body = "User-agent: *\nAllow: /\nSitemap: https://speakee.tnxbd.top/sitemap.xml\n"
     return Response(body, mimetype="text/plain")
 
 
 @app.route("/sitemap.xml", methods=["GET"])
 def sitemap():
-    loc = request.url_root.rstrip("/") + "/"
+    loc = "https://speakee.tnxbd.top/"
     xml = (
         '<?xml version="1.0" encoding="UTF-8"?>\n'
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
