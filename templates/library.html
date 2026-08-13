@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="en" class="dark">
+<html lang="en" class="scroll-smooth">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -18,7 +18,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
     <script>
       tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'] }, colors: { brand: { 50:'#eef2ff',100:'#e0e7ff',200:'#c7d2fe',300:'#a5b4fc',400:'#818cf8',500:'#6366f1',600:'#4f46e5',700:'#4338ca',800:'#3730a3',900:'#312e81' }, cta: { 400:'#34d399',500:'#10b981',600:'#059669' } } } } }
-      try { if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark'); } catch (e) {}
+      try {
+        var t = localStorage.getItem('theme');
+        var dark = (t === 'dark') || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        if (dark) document.documentElement.classList.add('dark');
+      } catch (e) {}
     </script>
     <style>
       body { font-family: '"Plus Jakarta Sans"', system-ui, sans-serif; }
@@ -39,7 +43,8 @@
             <span class="hidden sm:inline text-sm font-medium">Home</span>
           </a>
           <button id="themeBtn" class="w-9 h-9 grid place-items-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer" aria-label="Toggle theme">
-            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" stroke-linejoin="round"/></svg>
+            <svg id="iconMoon" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" stroke-linejoin="round"/></svg>
+            <svg id="iconSun" class="w-5 h-5 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19" stroke-linecap="round"/></svg>
           </button>
         </div>
       </div>
@@ -99,10 +104,22 @@
         populateFilters();
         render();
         ['search','fGender','fLang','fTag'].forEach(id => $(id).addEventListener('input', render));
+        function applyTheme(dark) {
+          document.documentElement.classList.toggle('dark', dark);
+          $('iconMoon').classList.toggle('hidden', dark);
+          $('iconSun').classList.toggle('hidden', !dark);
+        }
         $('themeBtn').addEventListener('click', () => {
-          const dark = document.documentElement.classList.toggle('dark');
+          const dark = !document.documentElement.classList.contains('dark');
+          applyTheme(dark);
           try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch (e) {}
         });
+        (function () {
+          let saved = null;
+          try { saved = localStorage.getItem('theme'); } catch (e) {}
+          const dark = (saved === 'dark') || (saved === null && window.matchMedia('(prefers-color-scheme: dark)').matches);
+          applyTheme(dark);
+        })();
       }
 
       function populateFilters() {
