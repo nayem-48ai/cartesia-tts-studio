@@ -16,6 +16,7 @@ import hashlib
 import base64
 import random
 import secrets
+import re
 import operator
 from flask import Flask, request, Response, render_template, redirect
 
@@ -38,6 +39,7 @@ API_VERSION = "2026-03-01"
 
 # Model support matrix verified live per language (sonic-2/3/3.5/turbo).
 MODELS_BY_LANG = {
+    "uid": ["sonic-3.5", "sonic-3", "sonic-turbo", "sonic-2"],
     "bn": ["sonic-3.5", "sonic-3"], "en": ["sonic-3.5", "sonic-3", "sonic-turbo", "sonic-2"],
     "hi": ["sonic-3.5", "sonic-3", "sonic-turbo"], "es": ["sonic-3.5", "sonic-3", "sonic-turbo", "sonic-2"],
     "fr": ["sonic-3.5", "sonic-3", "sonic-turbo", "sonic-2"], "de": ["sonic-3.5", "sonic-3", "sonic-turbo", "sonic-2"],
@@ -57,7 +59,7 @@ MODELS_BY_LANG = {
 }
 
 LANG_DISPLAY = {
-    "bn": "বাংলা", "en": "English", "hi": "हिन्दी", "es": "Spanish", "fr": "French",
+    "uid": "UID (Custom Voice)", "bn": "বাংলা", "en": "English", "hi": "हिन्दी", "es": "Spanish", "fr": "French",
     "de": "German", "ar": "Arabic", "ja": "Japanese", "ko": "Korean", "pt": "Portuguese",
     "it": "Italian", "nl": "Dutch", "pl": "Polish", "zh": "Chinese", "ru": "Russian",
     "sv": "Swedish", "te": "Telugu", "tl": "Tagalog", "tr": "Turkish", "ta": "Tamil",
@@ -86,12 +88,24 @@ for _l, _vs in VOICES.items():
     _pref = next((v["id"] for v in _vs if v.get("name") == DEFAULT_NAME.get(_l)), None)
     DEFAULT_VOICE[_l] = _pref or _vs[0]["id"]
 
+# ---- Full public voice library (868 voices) for the /library browser ----
+try:
+    with open(os.path.join(_HERE, "voice_library_all.json"), encoding="utf-8") as _f:
+        VOICE_LIBRARY = json.load(_f)
+except Exception:
+    VOICE_LIBRARY = []
+
 # ---- Token cache (avoid a mint round-trip on every TTS request) ----
 _token_cache = {"token": None, "ts": 0.0}
 _token_lock = threading.Lock()
 
 
 def get_token() -> str:
+    # If a real Cartesia account key is configured it is used directly (required for
+    # private/owned voices); otherwise fall back to the public token endpoint.
+    acct = os.environ.get("CARTESIA_API_KEY")
+    if acct:
+        return acct
     now = time.time()
     with _token_lock:
         if _token_cache["token"] and now - _token_cache["ts"] < 50:
@@ -202,6 +216,29 @@ def index():
     return render_template("index.html", site_url=request.url_root.rstrip("/"))
 
 
+@app.route("/library", methods=["GET"])
+def library():
+    return render_template("library.html", site_url=request.url_root.rstrip("/"))
+
+
+@app.route("/api/library", methods=["GET"])
+def api_library():
+    # Normalise each voice to the fields the browser needs.
+    out = []
+    for v in VOICE_LIBRARY:
+        out.append({
+            "id": v.get("id"),
+            "name": v.get("name"),
+            "description": v.get("description") or "",
+            "language": v.get("language"),
+            "gender": v.get("gender") or "",
+            "tag": "Pro" if v.get("is_pro") else "Free",
+            "mode": v.get("mode") or "",
+            "country": v.get("country") or "",
+        })
+    return {"count": len(out), "voices": out}
+
+
 @app.route("/robots.txt", methods=["GET"])
 def robots():
     body = "User-agent: *\nAllow: /\nSitemap: https://speakee.tnxbd.top/sitemap.xml\n"
@@ -255,17 +292,23 @@ def api_tts():
         return {"error": f"model '{model}' not supported for '{language}'"}, 400
 
     voice_id = body.get("voice_id") or DEFAULT_VOICE.get(language)
+    if language == "uid":
+        voice_id = (voice_id or "").strip()
+        if not re.match(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$", voice_id):
+            return {"error": "Invalid custom voice ID. Paste a valid UUID voice id (copy one from the Voice Library)."}, 400
     sample_rate = int(body.get("sample_rate", 44100))
 
     token = get_token()
-    payload = json.dumps({
+    payload = {
         "model_id": model,
         "transcript": text,
         "voice": {"mode": "id", "id": voice_id},
         "output_format": {"container": "mp3", "encoding": "mp3",
                           "sample_rate": sample_rate},
-        "language": language,
-    }).encode()
+    }
+    if language != "uid":
+        payload["language"] = language
+    payload = json.dumps(payload).encode()
 
     req = urllib.request.Request(
         TTS_URL, data=payload, method="POST",
