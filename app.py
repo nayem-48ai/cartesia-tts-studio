@@ -59,7 +59,7 @@ MODELS_BY_LANG = {
 }
 
 LANG_DISPLAY = {
-    "uid": "UID (Custom Voice)", "bn": "বাংলা", "en": "English", "hi": "हिन्दी", "es": "Spanish", "fr": "French",
+    "uid": "UID", "bn": "বাংলা", "en": "English", "hi": "हिन्दी", "es": "Spanish", "fr": "French",
     "de": "German", "ar": "Arabic", "ja": "Japanese", "ko": "Korean", "pt": "Portuguese",
     "it": "Italian", "nl": "Dutch", "pl": "Polish", "zh": "Chinese", "ru": "Russian",
     "sv": "Swedish", "te": "Telugu", "tl": "Tagalog", "tr": "Turkish", "ta": "Tamil",

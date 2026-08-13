@@ -70,6 +70,7 @@
       const $ = (id) => document.getElementById(id);
       let ALL = [], LANG_NAMES = {};
       const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+      const genderLabel = (g) => (g === 'feminine') ? 'Female' : (g === 'masculine') ? 'Male' : 'High Profiled person';
       const copyText = (text, btn) => navigator.clipboard.writeText(text).then(() => { const o = btn.textContent; btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = o, 1400); }).catch(() => {});
 
       async function init() {
@@ -87,7 +88,7 @@
       }
 
       function populateFilters() {
-        const genders = ['All', ...Array.from(new Set(ALL.map(v => v.gender || 'Unknown')))];
+        const genders = ['All', ...Array.from(new Set(ALL.map(v => genderLabel(v.gender))))];
         const langs = ['All', ...Array.from(new Set(ALL.map(v => v.language))).sort()];
         const tags = ['All', ...Array.from(new Set(ALL.map(v => v.tag)))];
         const fill = (sel, vals) => { sel.innerHTML = ''; vals.forEach(v => { const o = document.createElement('option'); o.value = v; o.textContent = (v === 'All') ? 'All' : (v === 'language' ? 'Language' : (LANG_NAMES[v] ? LANG_NAMES[v] + ' (' + v + ')' : v)); sel.appendChild(o); }); };
@@ -100,7 +101,7 @@
         const q = $('search').value.trim().toLowerCase();
         const g = $('fGender').value, l = $('fLang').value, t = $('fTag').value;
         const rows = ALL.filter(v => {
-          if (g !== 'All' && (v.gender || 'Unknown') !== g) return false;
+          if (g !== 'All' && genderLabel(v.gender) !== g) return false;
           if (l !== 'All' && v.language !== l) return false;
           if (t !== 'All' && v.tag !== t) return false;
           if (q) {
@@ -123,7 +124,7 @@
               '<button class="shrink-0 inline-flex items-center gap-1 text-xs font-semibold text-brand-600 dark:text-brand-300 hover:text-brand-700 px-2 py-1 rounded-lg hover:bg-brand-50 dark:hover:bg-slate-800 cursor-pointer" data-id="' + esc(v.id) + '">Copy ID</button>' +
             '</div>' +
             '<div class="flex flex-wrap gap-1.5">' +
-              '<span class="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[11px] font-medium text-slate-600 dark:text-slate-300">' + esc(v.gender || 'Unknown') + '</span>' +
+              '<span class="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[11px] font-medium text-slate-600 dark:text-slate-300">' + esc(genderLabel(v.gender)) + '</span>' +
               '<span class="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[11px] font-medium text-slate-600 dark:text-slate-300">' + esc(LANG_NAMES[v.language] || v.language) + '</span>' +
               '<span class="px-2 py-0.5 rounded-full bg-cta-50 dark:bg-cta-600/15 text-[11px] font-medium text-cta-700 dark:text-cta-400">' + esc(v.tag) + '</span>' +
             '</div>' +
