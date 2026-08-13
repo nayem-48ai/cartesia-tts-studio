@@ -1,0 +1,494 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TNxBD Studio — Free Multilingual AI Text to Speech (TTS)</title>
+  <meta name="description" content="TNxBD Studio is a free multilingual AI text-to-speech studio. Convert text into natural MP3 audio in 40+ languages — Bangla, English, Hindi, Spanish, French, Arabic, Japanese, Korean, Chinese and more. No API key required." />
+  <meta name="keywords" content="text to speech, TTS, AI voice generator, Bangla TTS, Hindi TTS, English TTS, multilingual TTS, free TTS API, voice cloning alternative, MP3 speech synthesis, Bengali voice, Spanish voice generator, French TTS, Arabic TTS, Japanese TTS, neural text to speech" />
+  <meta name="author" content="TNxBD Studio" />
+  <meta name="robots" content="index, follow" />
+  <meta name="theme-color" content="#6366f1" />
+  <link rel="canonical" href="{{ site_url }}/" />
+  <meta property="og:type" content="website" />
+  <meta property="og:site_name" content="TNxBD Studio" />
+  <meta property="og:title" content="TNxBD Studio — Free Multilingual AI Text to Speech" />
+  <meta property="og:description" content="Convert text to natural MP3 audio in 40+ languages. Free AI voice generator with a simple JSON API." />
+  <meta property="og:url" content="{{ site_url }}/" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="TNxBD Studio — Free Multilingual AI TTS" />
+  <meta name="twitter:description" content="Convert text to natural MP3 audio in 40+ languages. Free AI voice generator with a simple JSON API." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'] },
+          colors: {
+            brand: { 50:'#eef2ff',100:'#e0e7ff',200:'#c7d2fe',300:'#a5b4fc',
+                     400:'#818cf8',500:'#6366f1',600:'#4f46e5',700:'#4338ca',
+                     800:'#3730a3',900:'#312e81' },
+            cta: { 400:'#34d399',500:'#10b981',600:'#059669' }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    body { font-family: '"Plus Jakarta Sans"', system-ui, sans-serif; }
+    .glass { backdrop-filter: blur(12px); }
+    .grad-text { background: linear-gradient(90deg,#6366f1,#10b981); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    @keyframes pulse-ring { 0%{transform:scale(.8);opacity:.7} 100%{transform:scale(2.2);opacity:0} }
+    .spinner { width:18px;height:18px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite }
+    @keyframes spin { to { transform: rotate(360deg) } }
+    @keyframes steamRise { 0%{opacity:0;transform:translateY(2px)} 40%{opacity:.85} 100%{opacity:0;transform:translateY(-6px)} }
+    .coffee-steam { animation: steamRise 2.2s ease-in-out infinite; transform-origin: bottom center; }
+    .coffee-steam.s2 { animation-delay:.7s } .coffee-steam.s3 { animation-delay:1.4s }
+    #coffeeBtn:hover .coffee-cup { transform: translateY(-1px) rotate(-3deg); }
+    .coffee-cup { transition: transform .2s ease; }
+    @keyframes popIn { 0%{opacity:0;transform:scale(.96) translateY(8px)} 100%{opacity:1;transform:scale(1) translateY(0)} }
+    #supportModal .modal-card { animation: popIn .22s ease-out; }
+  </style>
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "TNxBD Studio",
+    "url": "{{ site_url }}/",
+    "description": "Free multilingual AI text-to-speech studio. Generate natural MP3 audio in 40+ languages via a clean web UI or a simple JSON API.",
+    "applicationCategory": "MultimediaApplication",
+    "operatingSystem": "Any",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "featureList": ["40+ languages", "MP3 export", "JSON API", "Dark mode"]
+  }
+  </script>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-200">
+
+  <!-- Navbar -->
+  <nav class="fixed top-3 left-3 right-3 z-50 mx-auto max-w-6xl">
+    <div class="glass rounded-2xl border border-white/60 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 shadow-sm px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-2.5">
+        <svg class="w-8 h-8 text-brand-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2v20M2 12h20M5 5l14 14M19 5L5 19" stroke-linecap="round"/></svg>
+        <span class="font-extrabold text-lg tracking-tight">TNxBD <span class="text-brand-500">Studio</span></span>
+      </div>
+      <div class="flex items-center gap-2">
+        <a href="https://github.com" target="_blank" rel="noreferrer" class="hidden sm:inline-flex items-center gap-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 px-3 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">
+          <svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 .5A11.5 11.5 0 0 0 .5 12a11.5 11.5 0 0 0 7.86 10.92c.58.1.79-.25.79-.56v-2c-3.2.7-3.88-1.37-3.88-1.37-.53-1.34-1.3-1.7-1.3-1.7-1.06-.72.08-.7.08-.7 1.17.08 1.78 1.2 1.78 1.2 1.04 1.78 2.74 1.27 3.4.97.1-.75.4-1.27.73-1.56-2.56-.3-5.25-1.28-5.25-5.7 0-1.26.45-2.3 1.2-3.1-.13-.3-.52-1.48.1-3.1 0 0 .98-.31 3.2 1.18a11 11 0 0 1 5.82 0c2.22-1.5 3.2-1.18 3.2-1.18.63 1.62.24 2.8.12 3.1.75.8 1.2 1.84 1.2 3.1 0 4.43-2.7 5.4-5.27 5.69.42.36.8 1.08.8 2.18v3.23c0 .31.21.67.8.56A11.5 11.5 0 0 0 23.5 12 11.5 11.5 0 0 0 12 .5Z"/></svg>
+          GitHub
+        </a>
+        <button id="coffeeBtn" class="relative w-9 h-9 grid place-items-center rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer" aria-label="Buy me a coffee" title="Support TNxBD Studio">
+          <svg class="w-5 h-5 coffee-cup" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+            <path d="M4 9h12v4a4 4 0 0 1-4 4H8a4 4 0 0 1-4-4V9Z" stroke-linejoin="round"/>
+            <path d="M16 10h2.5a2.5 2.5 0 0 1 0 5H16" stroke-linecap="round"/>
+            <path class="coffee-steam s1" d="M8 3.4c0 .9-.8 1.3-.8 2.3" stroke-linecap="round"/>
+            <path class="coffee-steam s2" d="M12 3.4c0 .9-.8 1.3-.8 2.3" stroke-linecap="round"/>
+            <path class="coffee-steam s3" d="M16 3.4c0 .9-.8 1.3-.8 2.3" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <button id="themeBtn" class="w-9 h-9 grid place-items-center rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer" aria-label="Toggle theme">
+          <svg id="iconMoon" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" stroke-linejoin="round"/></svg>
+          <svg id="iconSun" class="w-5 h-5 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <header class="pt-32 pb-10 px-4">
+    <div class="max-w-6xl mx-auto text-center">
+      <span class="inline-flex items-center gap-2 text-sm font-semibold text-brand-600 dark:text-brand-300 bg-brand-50 dark:bg-brand-900/40 px-3 py-1 rounded-full border border-brand-100 dark:border-brand-800">
+        <span class="w-2 h-2 rounded-full bg-cta-500 animate-pulse"></span> Studio-grade AI voices
+      </span>
+      <h1 class="mt-5 text-4xl sm:text-5xl font-extrabold tracking-tight">
+        Turn text into <span class="grad-text">natural speech</span><br/>in 40+ languages
+      </h1>
+      <p class="mt-4 max-w-2xl mx-auto text-slate-600 dark:text-slate-400 text-base sm:text-lg">
+        A professional AI voice generator. Pick a language and voice, type your script, and download studio-quality MP3 audio in seconds.
+      </p>
+    </div>
+  </header>
+
+  <!-- Studio Card -->
+  <main class="px-4 pb-16">
+    <div class="max-w-3xl mx-auto">
+      <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl p-5 sm:p-7">
+
+        <!-- Language selector -->
+        <div class="flex gap-2 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl overflow-x-auto" id="langTabs"></div>
+
+        <!-- Controls -->
+        <div class="mt-5 grid sm:grid-cols-2 gap-4">
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Model</label>
+            <select id="modelSel" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2.5 text-sm focus:ring-2 focus:ring-brand-400 outline-none cursor-pointer"></select>
+          </div>
+          <div>
+            <label class="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-1.5">Voice</label>
+            <select id="voiceSel" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2.5 text-sm focus:ring-2 focus:ring-brand-400 outline-none cursor-pointer"></select>
+            <div id="voiceInfo" class="mt-2 hidden sm:flex items-center justify-between rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 px-3 py-2">
+              <div class="min-w-0">
+                <p class="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Selected voice</p>
+                <p id="voiceName" class="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate">—</p>
+                <p id="voiceId" class="text-xs text-slate-400 font-mono truncate">—</p>
+              </div>
+              <button id="copyVoiceId" class="ml-3 shrink-0 inline-flex items-center gap-1 text-xs font-semibold text-brand-600 dark:text-brand-300 hover:text-brand-700 px-2.5 py-1.5 rounded-lg hover:bg-brand-50 dark:hover:bg-slate-700 transition-colors cursor-pointer" title="Copy voice ID">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10" stroke-linecap="round"/></svg>
+                Copy ID
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Text -->
+        <div class="mt-4">
+          <div class="flex items-center justify-between mb-1.5">
+            <label class="text-xs font-semibold text-slate-500 dark:text-slate-400">Script</label>
+            <span id="charCount" class="text-xs text-slate-400">0 characters</span>
+          </div>
+          <textarea id="textInput" rows="6" placeholder="Type or paste your text here…"
+            class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 py-3 text-sm leading-relaxed focus:ring-2 focus:ring-brand-400 outline-none resize-y"></textarea>
+        </div>
+
+        <!-- Generate -->
+        <button id="genBtn" class="mt-5 w-full cursor-pointer bg-brand-500 hover:bg-brand-600 active:bg-brand-700 text-white font-semibold rounded-xl py-3 flex items-center justify-center gap-2 transition-colors disabled:opacity-60">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3Z" stroke-linejoin="round"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v3" stroke-linecap="round"/></svg>
+          <span id="genLabel">Generate Speech</span>
+        </button>
+
+        <!-- Result -->
+        <div id="result" class="mt-5 hidden">
+          <div class="rounded-xl border border-cta-200 dark:border-cta-600/50 bg-cta-50 dark:bg-cta-600/10 p-4 flex items-center gap-4">
+            <button id="playBtn" class="w-11 h-11 shrink-0 grid place-items-center rounded-full bg-cta-500 hover:bg-cta-600 text-white cursor-pointer transition-colors" aria-label="Play / Pause">
+              <svg id="iconPlay" class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+              <svg id="iconPause" class="w-5 h-5 hidden" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>
+            </button>
+            <div class="flex-1 min-w-0">
+              <div class="flex items-center justify-between">
+                <p class="text-sm font-semibold text-cta-700 dark:text-cta-400">Audio ready</p>
+                <span id="audioMeta" class="text-[11px] font-medium text-slate-400"></span>
+              </div>
+              <div class="mt-2 flex items-center gap-3">
+                <span id="curTime" class="text-xs font-medium text-slate-500 dark:text-slate-400 tabular-nums w-10 text-right">0:00</span>
+                <div id="seek" class="group relative flex-1 h-2 rounded-full bg-slate-200 dark:bg-slate-700 cursor-pointer select-none">
+                  <div id="seekFill" class="absolute left-0 top-0 h-full rounded-full bg-cta-500" style="width:0%"></div>
+                  <div id="seekKnob" class="absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full bg-white border-2 border-cta-500 shadow opacity-0 group-hover:opacity-100 transition-opacity" style="left:0%"></div>
+                </div>
+                <span id="durTime" class="text-xs font-medium text-slate-500 dark:text-slate-400 tabular-nums w-10">0:00</span>
+              </div>
+              <audio id="audioPlayer" class="hidden"></audio>
+            </div>
+            <a id="downloadBtn" href="#" download="tts.mp3" class="shrink-0 cursor-pointer inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 dark:text-brand-300 hover:text-brand-700 px-3 py-2 rounded-lg hover:bg-brand-50 dark:hover:bg-slate-800 transition-colors">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              MP3
+            </a>
+          </div>
+        </div>
+
+        <!-- Error -->
+        <div id="errorBox" class="mt-4 hidden rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-700 dark:text-red-300"></div>
+
+        <!-- API hint -->
+        <details class="mt-6 group">
+          <summary class="cursor-pointer text-sm font-semibold text-slate-500 dark:text-slate-400 hover:text-brand-600 list-none flex items-center gap-1.5">
+            <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M8 9l4-4 4 4M8 15l4 4 4-4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Use the API instead
+          </summary>
+          <div class="mt-3 space-y-3">
+            <div>
+              <div class="flex items-center justify-between mb-1.5">
+                <span class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Request</span>
+                <button id="copyCurl" class="inline-flex items-center gap-1 text-xs font-semibold text-brand-600 dark:text-brand-300 hover:text-brand-700 px-2 py-1 rounded-lg hover:bg-brand-50 dark:hover:bg-slate-800 transition-colors cursor-pointer">
+                  <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10" stroke-linecap="round"/></svg>
+                  Copy
+                </button>
+              </div>
+              <pre class="text-xs bg-slate-900 text-slate-100 rounded-xl p-4 overflow-x-auto"><code id="apiSnippet"></code></pre>
+            </div>
+            <div>
+              <span class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Response</span>
+              <pre class="mt-1.5 text-xs bg-slate-900 text-slate-100 rounded-xl p-4 overflow-x-auto"><code># Success → HTTP 200, audio/mpeg (binary MP3, auto-download)
+# Error   → HTTP 4xx / 5xx, JSON body:
+{
+  "error": "TTS error 400: voice not found"
+}</code></pre>
+            </div>
+          </div>
+        </details>
+      </div>
+
+      <!-- Features -->
+      <div class="mt-10 grid sm:grid-cols-3 gap-4">
+        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5">
+          <svg class="w-7 h-7 text-brand-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M3 12h3l3 8 4-16 3 8h5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <h3 class="mt-3 font-bold">Lifelike voices</h3>
+          <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Sonic 3.5 delivers expressive, low-latency speech across languages.</p>
+        </div>
+        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5">
+          <svg class="w-7 h-7 text-cta-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18" stroke-linejoin="round"/></svg>
+          <h3 class="mt-3 font-bold">Multilingual</h3>
+          <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">40+ languages with curated male &amp; female voices.</p>
+        </div>
+        <div class="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-5">
+          <svg class="w-7 h-7 text-brand-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M4 7h16M4 12h16M4 17h10" stroke-linecap="round"/></svg>
+          <h3 class="mt-3 font-bold">Simple API</h3>
+          <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">POST JSON, get MP3. Drop it into any app or workflow.</p>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <footer class="border-t border-slate-200 dark:border-slate-800 py-6 text-center text-sm text-slate-400">
+    TNxBD Studio · Free multilingual AI voice generator · <span id="year"></span>
+  </footer>
+
+  <!-- Support modal -->
+  <div id="supportModal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
+    <div class="modal-card w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-6 relative">
+      <button id="closeModal" class="absolute top-3 right-3 w-8 h-8 grid place-items-center rounded-lg text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer" aria-label="Close">
+        <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round"/></svg>
+      </button>
+      <div class="flex items-center gap-3">
+        <div class="w-12 h-12 rounded-xl bg-[#F0B90B]/10 grid place-items-center text-[#F0B90B]">
+          <svg class="w-7 h-7" viewBox="0 0 24 24" fill="currentColor"><path d="M12 3.3l2.1 2.1-2.1 2.1L9.9 5.4 12 3.3zm5.3 5.3l2.1 2.1-2.1 2.1-2.1-2.1 2.1-2.1zM6.7 8.6l2.1 2.1-2.1 2.1L4.6 10.7l2.1-2.1zM12 9.9l2.1 2.1-2.1 2.1-2.1-2.1 2.1-2.1zm0 3.6l1.05 1.05L12 15.6l-1.05-1.05L12 13.5zm5.3-1.05l2.1 2.1L9.65 21.3 4.6 16.35l2.1-2.1 7.65 7.65 7.65-7.65z"/></svg>
+        </div>
+        <div>
+          <h3 class="text-lg font-bold text-slate-800 dark:text-slate-100">Support TNxBD Studio</h3>
+          <p class="text-sm text-slate-500 dark:text-slate-400">If this tool helps you, buy me a coffee.</p>
+        </div>
+      </div>
+      <div class="mt-5 space-y-3">
+        <div class="rounded-xl border border-slate-200 dark:border-slate-700 p-3">
+          <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide">Binance Pay ID</p>
+          <div class="mt-1 flex items-center justify-between gap-2">
+            <p id="binanceId" class="text-sm font-semibold font-mono text-slate-700 dark:text-slate-200">857955646</p>
+            <button id="copyBinance" class="shrink-0 inline-flex items-center gap-1 text-xs font-semibold text-brand-600 dark:text-brand-300 hover:text-brand-700 px-2 py-1 rounded-lg hover:bg-brand-50 dark:hover:bg-slate-800 cursor-pointer">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10" stroke-linecap="round"/></svg>
+              Copy
+            </button>
+          </div>
+          <p class="text-xs text-slate-400 mt-1">Name: Torikul Islam Nayem</p>
+        </div>
+        <div class="rounded-xl border border-slate-200 dark:border-slate-700 p-3">
+          <p class="text-xs font-semibold text-slate-400 uppercase tracking-wide">USDT (TRC-20 / ERC-20)</p>
+          <p id="usdtAddr" class="mt-1 text-sm font-semibold font-mono text-slate-700 dark:text-slate-200 break-all">Will be added soon</p>
+        </div>
+      </div>
+      <p class="mt-4 text-center text-xs text-slate-400">Thank you for your support!</p>
+    </div>
+  </div>
+
+  <script>
+    const PLACEHOLDERS = {
+      bn: 'এখানে আপনার লেখা লিখুন বা পেস্ট করুন…',
+      en: 'Type or paste your text here…',
+      hi: 'अपना टेक्स्ट यहाँ लिखें या पेस्ट करें…',
+      es: 'Escribe o pega tu texto aquí…',
+      fr: 'Écrivez ou collez votre texte ici…',
+      de: 'Schreiben oder fügen Sie Ihren Text hier ein…',
+      ar: 'اكتب أو الصق نصك هنا…',
+      ja: 'ここにテキストを入力または貼り付け…',
+      zh: '在此输入或粘贴您的文本…'
+    };
+    let currentLang = 'bn';
+    const $ = (id) => document.getElementById(id);
+    const fmtTime = (t) => { if (!isFinite(t) || t < 0) t = 0; const m = Math.floor(t / 60), s = Math.floor(t % 60); return m + ':' + String(s).padStart(2, '0'); };
+
+    async function loadLanguages() {
+      let langs = [];
+      try { const r = await fetch('/api/languages').then(x => x.json()); langs = r.languages || []; } catch (e) {
+        langs = [{ code: 'bn', name: 'বাংলা' }, { code: 'en', name: 'English' }, { code: 'hi', name: 'हिन्दी' }];
+      }
+      const tabs = $('langTabs'); tabs.innerHTML = '';
+      langs.forEach(l => {
+        const b = document.createElement('button');
+        b.dataset.lang = l.code;
+        b.className = 'lang-tab cursor-pointer whitespace-nowrap rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200';
+        b.textContent = l.name;
+        b.addEventListener('click', () => loadLang(l.code));
+        tabs.appendChild(b);
+      });
+      await loadLang(currentLang);
+    }
+
+    async function loadLang(lang) {
+      currentLang = lang;
+      $('textInput').placeholder = PLACEHOLDERS[lang] || 'Type or paste your text here…';
+      document.querySelectorAll('.lang-tab').forEach(t => {
+        const active = t.dataset.lang === lang;
+        t.className = 'lang-tab cursor-pointer whitespace-nowrap rounded-lg px-3 py-2.5 text-sm font-semibold transition-colors ' +
+          (active ? 'bg-white dark:bg-slate-900 text-brand-600 dark:text-brand-300 shadow-sm'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200');
+      });
+      const mRes = await fetch('/api/models?language=' + lang).then(r => r.json());
+      const mSel = $('modelSel'); mSel.innerHTML = '';
+      (mRes.models || []).forEach(m => {
+        const o = document.createElement('option'); o.value = m; o.textContent = m; mSel.appendChild(o);
+      });
+      const vRes = await fetch('/api/voices?language=' + lang).then(r => r.json());
+      const vSel = $('voiceSel'); vSel.innerHTML = '';
+      (vRes.voices || []).forEach(v => {
+        const o = document.createElement('option'); o.value = v.id;
+        o.textContent = v.name + ' · ' + v.gender; vSel.appendChild(o);
+      });
+      updateSnippet();
+      updateVoiceInfo();
+      hideResult();
+    }
+
+    function updateSnippet() {
+      const lang = currentLang;
+      const model = $('modelSel').value || 'sonic-3.5';
+      const voice = $('voiceSel').value || '';
+      const txt = ($('textInput').value || 'Your text here').replace(/"/g, '\\"');
+      $('apiSnippet').textContent =
+`curl -X POST ${location.origin}/api/tts \\
+  -H "Content-Type: application/json" \\
+  -d '{
+    "language": "${lang}",
+    "model": "${model}",
+    "voice_id": "${voice}",
+    "text": "${txt}"
+  }'`;
+    }
+
+    function updateVoiceInfo() {
+      const sel = $('voiceSel');
+      if (!sel.value) { $('voiceInfo').classList.add('hidden'); return; }
+      $('voiceInfo').classList.remove('hidden');
+      const opt = sel.selectedOptions[0];
+      $('voiceName').textContent = opt ? opt.textContent.split(' · ')[0] : '—';
+      $('voiceId').textContent = sel.value;
+    }
+
+    function copyText(text, btn, label) {
+      navigator.clipboard.writeText(text).then(() => {
+        const old = btn.textContent;
+        btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = label || old; }, 1400);
+      }).catch(() => {});
+    }
+
+    function setLoading(on) {
+      $('genBtn').disabled = on;
+      $('genLabel').textContent = on ? 'Generating…' : 'Generate Speech';
+      if (on) {
+        const s = document.createElement('span'); s.className = 'spinner'; s.id = 'spin';
+        $('genBtn').prepend(s);
+      } else { const s = $('spin'); if (s) s.remove(); }
+    }
+    function showError(msg) { const e = $('errorBox'); e.textContent = msg; e.classList.remove('hidden'); }
+    function hideError() { $('errorBox').classList.add('hidden'); }
+    function hideResult() { $('result').classList.add('hidden'); }
+
+    // ---- Custom audio player with timer + seek ----
+    const audio = $('audioPlayer');
+    function resetPlayer() {
+      audio.pause();
+      try { audio.currentTime = 0; } catch (e) {}
+      $('seekFill').style.width = '0%';
+      $('seekKnob').style.left = '0%';
+      $('curTime').textContent = '0:00';
+      $('durTime').textContent = '0:00';
+      $('iconPlay').classList.remove('hidden');
+      $('iconPause').classList.add('hidden');
+    }
+    $('playBtn').addEventListener('click', () => { if (audio.paused) audio.play(); else audio.pause(); });
+    audio.addEventListener('play', () => { $('iconPlay').classList.add('hidden'); $('iconPause').classList.remove('hidden'); });
+    audio.addEventListener('pause', () => { $('iconPlay').classList.remove('hidden'); $('iconPause').classList.add('hidden'); });
+    audio.addEventListener('loadedmetadata', () => { $('durTime').textContent = fmtTime(audio.duration); });
+    audio.addEventListener('timeupdate', () => {
+      const d = audio.duration || 0;
+      const p = d ? (audio.currentTime / d * 100) : 0;
+      $('seekFill').style.width = p + '%';
+      $('seekKnob').style.left = p + '%';
+      $('curTime').textContent = fmtTime(audio.currentTime);
+    });
+    function seekFromEvent(e) {
+      const r = $('seek').getBoundingClientRect();
+      const x = Math.min(1, Math.max(0, (e.clientX - r.left) / r.width));
+      if (audio.duration) audio.currentTime = x * audio.duration;
+    }
+    $('seek').addEventListener('click', seekFromEvent);
+    $('seek').addEventListener('pointerdown', (e) => {
+      seekFromEvent(e);
+      const move = (ev) => seekFromEvent(ev);
+      const up = () => { document.removeEventListener('pointermove', move); document.removeEventListener('pointerup', up); };
+      document.addEventListener('pointermove', move);
+      document.addEventListener('pointerup', up);
+    });
+
+    $('genBtn').addEventListener('click', async () => {
+      hideError(); hideResult();
+      const text = $('textInput').value.trim();
+      if (!text) { showError('Please enter some text first.'); return; }
+      setLoading(true);
+      try {
+        const res = await fetch('/api/tts', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            language: currentLang,
+            model: $('modelSel').value,
+            voice_id: $('voiceSel').value,
+            text
+          })
+        });
+        if (!res.ok) {
+          const err = await res.json().catch(() => ({}));
+          throw new Error(err.error || ('Request failed (' + res.status + ')'));
+        }
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        audio.src = url;
+        $('downloadBtn').href = url;
+        $('downloadBtn').download = `tts-${currentLang}.mp3`;
+        const vName = ($('voiceSel').selectedOptions[0] ? $('voiceSel').selectedOptions[0].textContent.split(' · ')[0] : '');
+        $('audioMeta').textContent = `${$('modelSel').value} · ${vName}`;
+        resetPlayer();
+        $('result').classList.remove('hidden');
+      } catch (e) {
+        showError(e.message);
+      } finally { setLoading(false); }
+    });
+
+    $('textInput').addEventListener('input', () => {
+      $('charCount').textContent = $('textInput').value.length + ' characters';
+      updateSnippet();
+    });
+    $('modelSel').addEventListener('change', updateSnippet);
+    $('voiceSel').addEventListener('change', () => { updateSnippet(); updateVoiceInfo(); });
+
+    // theme
+    const themeBtn = $('themeBtn');
+    function applyTheme(dark) {
+      document.documentElement.classList.toggle('dark', dark);
+      $('iconMoon').classList.toggle('hidden', dark);
+      $('iconSun').classList.toggle('hidden', !dark);
+    }
+    themeBtn.addEventListener('click', () => applyTheme(!document.documentElement.classList.contains('dark')));
+    applyTheme(window.matchMedia('(prefers-color-scheme: dark)').matches);
+
+    // copy buttons
+    $('copyCurl').addEventListener('click', () => copyText($('apiSnippet').textContent, $('copyCurl'), 'Copy'));
+    $('copyVoiceId').addEventListener('click', () => copyText($('voiceId').textContent, $('copyVoiceId'), 'Copy ID'));
+    $('copyBinance').addEventListener('click', () => copyText($('binanceId').textContent, $('copyBinance'), 'Copy'));
+
+    // support modal
+    const modal = $('supportModal');
+    const openModal = () => { modal.classList.remove('hidden'); modal.classList.add('flex'); };
+    const closeModal = () => { modal.classList.add('hidden'); modal.classList.remove('flex'); };
+    $('coffeeBtn').addEventListener('click', openModal);
+    $('closeModal').addEventListener('click', closeModal);
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeModal(); });
+
+    $('year').textContent = new Date().getFullYear();
+    loadLanguages();
+  </script>
+</body>
+</html>
