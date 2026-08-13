@@ -117,6 +117,24 @@
     @keyframes marqueeL { from { transform: translateX(0); } to { transform: translateX(-50%); } }
     @keyframes marqueeR { from { transform: translateX(-50%); } to { transform: translateX(0); } }
     .marquee:hover .marquee-track { animation-play-state: paused; }
+
+    /* Slide viewers: tighter padding + animated card on activation */
+    #hiwTrack .slide, #faqTrack .slide { padding: 1rem; }
+    #hiwTrack .slide > div, #faqTrack .slide > div { padding: 1rem; }
+    #hiwTrack .slide > div {
+      max-width: 28rem; margin: 0 auto;
+      border: 1px solid rgba(148,163,184,.35);
+      background: rgba(241,245,249,.7);
+      border-radius: 1rem;
+    }
+    .dark #hiwTrack .slide > div { border-color: rgba(30,41,59,.8); background: rgba(30,41,59,.45); }
+    #hiwTrack .slide.is-active > div, #faqTrack .slide.is-active > div {
+      animation: cardPop .55s cubic-bezier(.2,.8,.2,1) both;
+    }
+    @keyframes cardPop {
+      0% { opacity: 0; transform: translateY(16px) scale(.94); }
+      100% { opacity: 1; transform: none; }
+    }
   </style>
   <script type="application/ld+json">
   {
@@ -894,6 +912,7 @@
       function go(i) {
         idx = (i + slides.length) % slides.length;
         track.style.transform = 'translateX(-' + (idx * 100) + '%)';
+        slides.forEach((s, bi) => s.classList.toggle('is-active', bi === idx));
         dotsWrap.querySelectorAll('button').forEach((b, bi) => {
           b.className = (bi === idx ? 'w-6 h-2 rounded-full bg-brand-500 transition-all cursor-pointer' : 'w-2 h-2 rounded-full bg-slate-300 dark:bg-slate-700 transition-all cursor-pointer');
         });
