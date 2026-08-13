@@ -20,7 +20,11 @@
       tailwind.config = { darkMode: 'class', theme: { extend: { fontFamily: { sans: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'] }, colors: { brand: { 50:'#eef2ff',100:'#e0e7ff',200:'#c7d2fe',300:'#a5b4fc',400:'#818cf8',500:'#6366f1',600:'#4f46e5',700:'#4338ca',800:'#3730a3',900:'#312e81' }, cta: { 400:'#34d399',500:'#10b981',600:'#059669' } } } } }
       try { if (localStorage.getItem('theme') === 'dark') document.documentElement.classList.add('dark'); } catch (e) {}
     </script>
-    <style> body { font-family: '"Plus Jakarta Sans"', system-ui, sans-serif; } </style>
+    <style>
+      body { font-family: '"Plus Jakarta Sans"', system-ui, sans-serif; }
+      @keyframes libGlow { 0%,100%{filter:drop-shadow(0 0 0 rgba(99,102,241,0))} 50%{filter:drop-shadow(0 0 5px rgba(99,102,241,.55))} }
+      .lib-ico { animation: libGlow 3.2s ease-in-out infinite; }
+    </style>
   </head>
   <body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 min-h-screen">
     <nav class="sticky top-0 z-40 backdrop-blur bg-white/80 dark:bg-slate-950/80 border-b border-slate-200 dark:border-slate-800">
@@ -30,8 +34,10 @@
           <span class="font-extrabold text-lg tracking-tight">TNxBD <span class="text-brand-500">Studio</span></span>
         </a>
         <div class="flex items-center gap-2">
-          <a href="/library" class="text-sm font-semibold text-brand-600 dark:text-brand-300 px-3 py-1.5 rounded-lg bg-brand-50 dark:bg-brand-900/40">Voice Library</a>
-          <a href="https://github.com" target="_blank" rel="nofollow noopener noreferrer" class="text-sm font-medium text-slate-600 dark:text-slate-300 hover:text-brand-600 px-3 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800">GitHub</a>
+          <a href="/" aria-label="Home" class="group inline-flex items-center gap-1.5 text-slate-600 dark:text-slate-300 hover:text-brand-600 px-2 sm:px-3 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">
+            <svg class="lib-ico w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 10.5 12 3l9 7.5M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span class="hidden sm:inline text-sm font-medium">Home</span>
+          </a>
           <button id="themeBtn" class="w-9 h-9 grid place-items-center rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer" aria-label="Toggle theme">
             <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" stroke-linejoin="round"/></svg>
           </button>
