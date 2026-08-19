@@ -429,6 +429,14 @@
         </div>
       </section>
 
+      <!-- Popular voices (owned voices, single flowing ticker) -->
+      <section class="mt-10">
+        <h2 class="text-xl font-bold text-center text-slate-800 dark:text-slate-100">Popular voices</h2>
+        <div class="mt-5 marquee rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 py-3">
+          <div id="popMarquee" class="marquee-track"></div>
+        </div>
+      </section>
+
       <!-- How it works (animated slide viewer) -->
       <section class="mt-10">
         <div class="flex items-center justify-between mb-4">
@@ -932,6 +940,22 @@
       const a = $('marqueeA'), b = $('marqueeB');
       if (a) a.innerHTML = make() + make();
       if (b) b.innerHTML = make() + make();
+    })();
+
+    // ---- Popular voices ticker: owned voices as name + flag, single flowing line ----
+    (function () {
+      const FLAG = { bn: '\u{1F1E7}\u{1F1E9}', hi: '\u{1F1EE}\u{1F1F3}' };
+      const POPULAR = [
+        { name: 'BTV', lang: 'bn' }, { name: 'Anify cl', lang: 'hi' },
+        { name: 'Rahat', lang: 'bn' }, { name: 'News Reader', lang: 'bn' },
+        { name: 'Jack', lang: 'hi' }, { name: 'Sohan Ahmed', lang: 'bn' },
+        { name: 'Obaidul Quader', lang: 'bn' }, { name: 'Sheikh Hasina', lang: 'bn' },
+        { name: 'Jubayer', lang: 'bn' }, { name: 'Nayem', lang: 'bn' }
+      ];
+      const pop = $('popMarquee');
+      if (!pop) return;
+      const make = () => POPULAR.map(v => '<span class="px-3 py-1 text-sm font-medium text-slate-600 dark:text-slate-300 whitespace-nowrap">' + (FLAG[v.lang] || '') + ' ' + v.name + '</span>').join('');
+      pop.innerHTML = make() + make();
     })();
 
     // accordion: only one details section open at a time
