@@ -9,6 +9,7 @@
   <meta name="author" content="TNxBD Studio" />
   <meta name="robots" content="index, follow, max-image-preview:large" />
   <meta name="theme-color" content="#6366f1" />
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
   <script>
     (function () {
       try {
@@ -33,7 +34,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/static/tailwind.css" />
   <style>
-    body { font-family: '"Plus Jakarta Sans"', system-ui, sans-serif; }
+    body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
     .glass { backdrop-filter: blur(12px); }
     .grad-text { background: linear-gradient(90deg,#6366f1,#10b981); -webkit-background-clip: text; background-clip: text; color: transparent; }
     @keyframes pulse-ring { 0%{transform:scale(.8);opacity:.7} 100%{transform:scale(2.2);opacity:0} }
@@ -305,7 +306,7 @@
               </div>
               <div class="mt-2 flex items-center gap-3">
                 <span id="curTime" class="text-xs font-medium text-slate-600 dark:text-slate-400 tabular-nums w-10 text-right">0:00</span>
-                <div id="seek" class="group relative flex-1 h-2 rounded-full bg-slate-200 dark:bg-slate-700 cursor-pointer select-none">
+                <div id="seek" class="group relative flex-1 h-2 rounded-full bg-slate-200 dark:bg-slate-700 cursor-pointer select-none" role="slider" tabindex="0" aria-label="Seek audio" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
                   <div id="seekFill" class="absolute left-0 top-0 h-full rounded-full bg-cta-500" style="width:0%"></div>
                   <div id="seekKnob" class="absolute top-1/2 -translate-y-1/2 w-3.5 h-3.5 rounded-full bg-white border-2 border-cta-500 shadow opacity-0 group-hover:opacity-100 transition-opacity" style="left:0%"></div>
                 </div>
@@ -315,7 +316,7 @@
             </div>
             <a id="downloadBtn" href="#" download="tts.mp3" class="shrink-0 cursor-pointer inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 dark:text-brand-300 hover:text-brand-700 px-3 py-2 rounded-lg hover:bg-brand-50 dark:hover:bg-slate-800 transition-colors">
               <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              MP3
+              <span id="dlLabel">MP3</span>
             </a>
           </div>
         </div>
@@ -635,7 +636,7 @@
 
   <!-- Support modal -->
   <div id="supportModal" class="fixed inset-0 z-[60] hidden items-center justify-center bg-slate-900/60 backdrop-blur-sm p-4">
-    <div class="modal-card w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-6 relative">
+    <div class="modal-card w-full max-w-md rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-2xl p-6 relative" role="dialog" aria-modal="true" aria-label="Support TNxBD Studio">
       <button id="closeModal" class="absolute top-3 right-3 w-8 h-8 grid place-items-center rounded-lg text-slate-600 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer" aria-label="Close">
         <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 6l12 12M18 6L6 18" stroke-linecap="round"/></svg>
       </button>
@@ -792,7 +793,7 @@
     let challengeToken = '';
     const VFY_KEY = 'tnxbd_vfy';
     function setVerified(ttl) { try { localStorage.setItem(VFY_KEY, JSON.stringify({ exp: Date.now() + ttl * 1000 })); } catch (e) {} }
-    function isVerified() { try { const v = JSON.parse(localStorage.getItem(VFY_KEY) || '{}'); return v.exp && v.exp > Date.now() + 8000; } catch (e) { return false; } }
+    function isVerified() { try { const v = JSON.parse(localStorage.getItem(VFY_KEY) || '{}'); return v.exp && v.exp > Date.now(); } catch (e) { return false; } }
     function revealApi() {
       $('apiLocked').classList.add('hidden');
       $('apiReveal').classList.remove('hidden');
@@ -867,6 +868,7 @@
       $('seekFill').style.width = p + '%';
       $('seekKnob').style.left = p + '%';
       $('curTime').textContent = fmtTime(audio.currentTime);
+      $('seek').setAttribute('aria-valuenow', Math.round(p));
     });
     function seekFromEvent(e) {
       const r = $('seek').getBoundingClientRect();
@@ -880,6 +882,17 @@
       const up = () => { document.removeEventListener('pointermove', move); document.removeEventListener('pointerup', up); };
       document.addEventListener('pointermove', move);
       document.addEventListener('pointerup', up);
+    });
+    $('seek').addEventListener('keydown', (e) => {
+      if (!audio.duration) return;
+      let t = audio.currentTime;
+      if (e.key === 'ArrowLeft') t -= 5;
+      else if (e.key === 'ArrowRight') t += 5;
+      else if (e.key === 'Home') t = 0;
+      else if (e.key === 'End') t = audio.duration;
+      else return;
+      e.preventDefault();
+      audio.currentTime = Math.min(audio.duration, Math.max(0, t));
     });
 
     $('genBtn').addEventListener('click', async () => {
@@ -912,9 +925,12 @@
         }
         const blob = await res.blob();
         const url = URL.createObjectURL(blob);
+        if (window._lastGenUrl) { try { URL.revokeObjectURL(window._lastGenUrl); } catch (e) {} }
+        window._lastGenUrl = url;
         audio.src = url;
         $('downloadBtn').href = url;
         $('downloadBtn').download = `tts-${currentLang}.${getFmt()}`;
+        $('dlLabel').textContent = getFmt().toUpperCase();
         const vName = (currentLang === 'uid') ? ('Custom UID ' + ($('uidInput').value.trim().slice(0, 8) + '…'))
           : ($('voiceSel').selectedOptions[0] ? $('voiceSel').selectedOptions[0].textContent.split(' · ')[0] : '');
         $('audioMeta').textContent = `${$('modelSel').value} · ${vName} · ${getFmt().toUpperCase()}`;
@@ -975,8 +991,8 @@
 
     // support modal
     const modal = $('supportModal');
-    const openModal = () => { modal.classList.remove('hidden'); modal.classList.add('flex'); };
-    const closeModal = () => { modal.classList.add('hidden'); modal.classList.remove('flex'); };
+    const openModal = () => { modal.classList.remove('hidden'); modal.classList.add('flex'); try { $('closeModal').focus(); } catch (e) {} };
+    const closeModal = () => { modal.classList.add('hidden'); modal.classList.remove('flex'); try { $('coffeeBtn').focus(); } catch (e) {} };
     $('coffeeBtn').addEventListener('click', openModal);
     $('closeModal').addEventListener('click', closeModal);
     modal.addEventListener('click', (e) => { if (e.target === modal) closeModal(); });
@@ -1063,6 +1079,7 @@
       $('fmtWav').setAttribute('aria-pressed', String(w));
       styleFmt();
       saveSel('tts_format', f);
+      const dl = $('dlLabel'); if (dl) dl.textContent = w ? 'WAV' : 'MP3';
       updateSnippet();
     }
     $('fmtMp3').addEventListener('click', () => setFmt('mp3'));
@@ -1074,7 +1091,13 @@
     function loadHistory() { try { return JSON.parse(localStorage.getItem(HKEY) || '[]'); } catch (e) { return []; } }
     function saveHistory(arr) {
       try { localStorage.setItem(HKEY, JSON.stringify(arr)); }
-      catch (e) { if (arr.length > 1) { arr.pop(); saveHistory(arr); } }
+      catch (e) {
+        try {
+          if (arr.length > 2) arr = arr.slice(0, Math.max(1, Math.ceil(arr.length / 2)));
+          else arr = arr.slice(0, Math.max(0, arr.length - 1));
+          localStorage.setItem(HKEY, JSON.stringify(arr));
+        } catch (e2) {}
+      }
     }
     function blobToDataURL(blob) {
       return new Promise((res, rej) => {
