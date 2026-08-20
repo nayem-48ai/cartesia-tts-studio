@@ -235,6 +235,7 @@ def api_library():
             "tag": "Pro" if v.get("is_pro") else "Free",
             "mode": v.get("mode") or "",
             "country": v.get("country") or "",
+            "owner": bool(v.get("is_owner")),
         })
     return {"count": len(out), "voices": out}
 
@@ -297,14 +298,24 @@ def api_tts():
         if not re.match(r"^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$", voice_id):
             return {"error": "Invalid custom voice ID. Paste a valid UUID voice id (copy one from the Voice Library)."}, 400
     sample_rate = int(body.get("sample_rate", 44100))
+    fmt = (body.get("format") or "mp3").lower()
+    if fmt not in ("mp3", "wav"):
+        fmt = "mp3"
 
     token = get_token()
+    if fmt == "wav":
+        output_format = {"container": "wav", "encoding": "pcm_s16le",
+                         "sample_rate": sample_rate}
+        mime, ext = "audio/wav", "wav"
+    else:
+        output_format = {"container": "mp3", "encoding": "mp3",
+                         "sample_rate": sample_rate}
+        mime, ext = "audio/mpeg", "mp3"
     payload = {
         "model_id": model,
         "transcript": text,
         "voice": {"mode": "id", "id": voice_id},
-        "output_format": {"container": "mp3", "encoding": "mp3",
-                          "sample_rate": sample_rate},
+        "output_format": output_format,
     }
     if language != "uid":
         payload["language"] = language
@@ -320,9 +331,9 @@ def api_tts():
     except urllib.error.HTTPError as e:
         return {"error": f"TTS error {e.code}: {e.read().decode()[:300]}"}, 502
 
-    return Response(audio, mimetype="audio/mpeg",
+    return Response(audio, mimetype=mime,
                     headers={"Content-Disposition":
-                              'attachment; filename="tts.mp3"'})
+                              'attachment; filename="tts.%s"' % ext})
 
 
 # Convenience aliases matching the earlier API.

@@ -119,6 +119,11 @@
       0% { opacity: 0; transform: translateY(16px) scale(.94); }
       100% { opacity: 1; transform: none; }
     }
+    @media (prefers-reduced-motion: reduce) {
+      .marquee-track { animation: none !important; }
+      .soundwave rect, .logo-mark, .lib-ico, .coffee-steam, .feature-card .ficon, .dev-btn .dev-ico, .dev-btn::after, .lib-pulse { animation: none !important; }
+      html { scroll-behavior: auto !important; }
+    }
   </style>
   <script type="application/ld+json">
   {
@@ -264,6 +269,15 @@
             class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-4 py-3 text-sm leading-relaxed focus:ring-2 focus:ring-brand-400 outline-none resize-y"></textarea>
         </div>
 
+        <!-- Output format -->
+        <div class="mt-4 flex items-center justify-between">
+          <span class="text-xs font-semibold text-slate-600 dark:text-slate-400">Output format</span>
+          <div class="inline-flex rounded-xl border border-slate-200 dark:border-slate-700 overflow-hidden" role="group" aria-label="Output format">
+            <button id="fmtMp3" type="button" class="px-3 py-1.5 text-sm font-semibold cursor-pointer transition-colors" aria-pressed="true">MP3</button>
+            <button id="fmtWav" type="button" class="px-3 py-1.5 text-sm font-semibold cursor-pointer transition-colors" aria-pressed="false">WAV</button>
+          </div>
+        </div>
+
         <!-- Generate -->
         <button id="genBtn" class="mt-5 w-full cursor-pointer bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white font-semibold rounded-xl py-3 flex items-center justify-center gap-2 transition-colors disabled:opacity-60">
           <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3Z" stroke-linejoin="round"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v3" stroke-linecap="round"/></svg>
@@ -301,9 +315,22 @@
 
         <!-- Error -->
         <div id="errorBox" class="mt-4 hidden rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-700 dark:text-red-300"></div>
-      </div>
+        </div>
 
-      <!-- API section (expandable, captcha-gated curl) -->
+        <!-- Recent generations (local history) -->
+        <section id="historySection" class="mt-8 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-lg p-5 sm:p-7">
+          <div class="flex items-center justify-between gap-3">
+            <h2 class="text-lg font-bold text-slate-800 dark:text-slate-100 flex items-center gap-2">
+              <svg class="w-5 h-5 text-brand-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 8v4l3 3" stroke-linecap="round" stroke-linejoin="round"/><circle cx="12" cy="12" r="9"/></svg>
+              Recent generations
+            </h2>
+            <button id="historyClear" class="text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-red-500 px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">Clear all</button>
+          </div>
+          <p id="historyEmpty" class="mt-3 text-sm text-slate-600 dark:text-slate-400">No generations yet — your recent clips will appear here (saved on this device).</p>
+          <div id="historyList" class="mt-3 space-y-2"></div>
+        </section>
+
+        <!-- API section (expandable, captcha-gated curl) -->
       <section class="mt-8 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-lg p-5 sm:p-7">
         <details id="apiDetails" class="apidetails acc group">
           <summary class="flex items-center gap-2.5 text-slate-700 dark:text-slate-200">
@@ -682,6 +709,7 @@
       const lang = currentLang;
       const model = $('modelSel').value || 'sonic-3.5';
       const voice = getVoiceId() || '';
+      const fmt = (typeof getFmt === 'function') ? getFmt() : 'mp3';
       const txt = ($('textInput').value || 'Your text here').replace(/"/g, '\\"');
       $('apiSnippet').textContent =
 `curl -X POST ${location.origin}/api/tts \\
@@ -690,7 +718,8 @@
     "language": "${lang}",
     "model": "${model}",
     "voice_id": "${voice}",
-    "text": "${txt}"
+    "text": "${txt}",
+    "format": "${fmt}"
   }'`;
     }
 
@@ -824,7 +853,8 @@
             language: currentLang,
             model: $('modelSel').value,
             voice_id: getVoiceId(),
-            text
+            text,
+            format: getFmt()
           })
         });
         if (!res.ok) {
@@ -835,12 +865,24 @@
         const url = URL.createObjectURL(blob);
         audio.src = url;
         $('downloadBtn').href = url;
-        $('downloadBtn').download = `tts-${currentLang}.mp3`;
+        $('downloadBtn').download = `tts-${currentLang}.${getFmt()}`;
         const vName = (currentLang === 'uid') ? ('Custom UID ' + ($('uidInput').value.trim().slice(0, 8) + '…'))
           : ($('voiceSel').selectedOptions[0] ? $('voiceSel').selectedOptions[0].textContent.split(' · ')[0] : '');
-        $('audioMeta').textContent = `${$('modelSel').value} · ${vName}`;
+        $('audioMeta').textContent = `${$('modelSel').value} · ${vName} · ${getFmt().toUpperCase()}`;
         resetPlayer();
         $('result').classList.remove('hidden');
+        try {
+          const dataUrl = await blobToDataURL(blob);
+          pushHistory({
+            id: Date.now(),
+            lang: currentLang,
+            model: $('modelSel').value,
+            voiceName: vName,
+            fmt: getFmt(),
+            text: text.slice(0, 140),
+            audio: dataUrl
+          });
+        } catch (e) {}
       } catch (e) {
         showError(e.message);
       } finally { setLoading(false); }
@@ -956,6 +998,108 @@
         if (d.open) document.querySelectorAll('details.acc').forEach(o => { if (o !== d) o.open = false; });
       });
     });
+    // ---- Output format (MP3/WAV) ----
+    function getFmt() { return ($('fmtWav').getAttribute('aria-pressed') === 'true') ? 'wav' : 'mp3'; }
+    function styleFmt() {
+      ['fmtMp3', 'fmtWav'].forEach(id => {
+        const on = $(id).getAttribute('aria-pressed') === 'true';
+        $(id).className = 'px-3 py-1.5 text-sm font-semibold cursor-pointer transition-colors ' +
+          (on ? 'bg-brand-500 text-white' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800');
+      });
+    }
+    function setFmt(f) {
+      const w = (f === 'wav');
+      $('fmtMp3').setAttribute('aria-pressed', String(!w));
+      $('fmtWav').setAttribute('aria-pressed', String(w));
+      styleFmt();
+      saveSel('tts_format', f);
+      updateSnippet();
+    }
+    $('fmtMp3').addEventListener('click', () => setFmt('mp3'));
+    $('fmtWav').addEventListener('click', () => setFmt('wav'));
+    setFmt(getSel('tts_format') || 'mp3');
+
+    // ---- Generation history (localStorage) ----
+    const HKEY = 'tts_history';
+    function loadHistory() { try { return JSON.parse(localStorage.getItem(HKEY) || '[]'); } catch (e) { return []; } }
+    function saveHistory(arr) {
+      try { localStorage.setItem(HKEY, JSON.stringify(arr)); }
+      catch (e) { if (arr.length > 1) { arr.pop(); saveHistory(arr); } }
+    }
+    function blobToDataURL(blob) {
+      return new Promise((res, rej) => {
+        const r = new FileReader();
+        r.onload = () => res(r.result);
+        r.onerror = rej;
+        r.readAsDataURL(blob);
+      });
+    }
+    function pushHistory(item) {
+      let h = loadHistory();
+      h.unshift(item);
+      if (h.length > 6) h = h.slice(0, 6);
+      saveHistory(h);
+      renderHistory();
+    }
+    function escHtml(s) { return String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+    function renderHistory() {
+      const h = loadHistory();
+      const list = $('historyList'), empty = $('historyEmpty');
+      list.innerHTML = '';
+      empty.classList.toggle('hidden', h.length > 0);
+      h.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'flex items-center gap-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2';
+        row.innerHTML =
+          '<button class="hist-play w-9 h-9 shrink-0 grid place-items-center rounded-full bg-cta-500 hover:bg-cta-600 text-white cursor-pointer transition-colors" aria-label="Play clip">' +
+            '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>' +
+          '</button>' +
+          '<div class="flex-1 min-w-0">' +
+            '<p class="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate">' + escHtml(item.voiceName || 'Voice') + '</p>' +
+            '<p class="text-xs text-slate-600 dark:text-slate-400 truncate">' + escHtml((item.text || '').replace(/\s+/g, ' ')) + ' · ' + (item.lang || '') + ' · ' + (item.model || '') + ' · ' + (item.fmt || 'mp3').toUpperCase() + '</p>' +
+          '</div>' +
+          '<div class="flex items-center gap-1 shrink-0">' +
+            '<button class="hist-dl w-8 h-8 grid place-items-center rounded-lg text-brand-600 dark:text-brand-300 hover:bg-brand-50 dark:hover:bg-slate-800 cursor-pointer transition-colors" aria-label="Download clip"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
+            '<button class="hist-copy w-8 h-8 grid place-items-center rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-colors" aria-label="Copy text"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10" stroke-linecap="round"/></svg></button>' +
+            '<button class="hist-del w-8 h-8 grid place-items-center rounded-lg text-slate-600 dark:text-slate-300 hover:text-red-500 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-colors" aria-label="Delete clip"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 7h14M9 7V5h6v2M6 7l1 13h10l1-13" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
+          '</div>' +
+          '<audio class="hidden hist-audio" src="' + item.audio + '"></audio>';
+        const au = row.querySelector('.hist-audio');
+        const playBtn = row.querySelector('.hist-play');
+        let playing = false;
+        playBtn.addEventListener('click', () => {
+          if (playing) { au.pause(); }
+          else {
+            document.querySelectorAll('#historyList audio').forEach(o => { if (o !== au) o.pause(); });
+            au.play();
+          }
+        });
+        au.addEventListener('play', () => { playing = true; playBtn.innerHTML = '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>'; });
+        au.addEventListener('pause', () => { playing = false; playBtn.innerHTML = '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>'; });
+        row.querySelector('.hist-dl').addEventListener('click', () => {
+          const a = document.createElement('a');
+          a.href = item.audio; a.download = 'tts-' + (item.lang || 'audio') + '.' + (item.fmt || 'mp3');
+          document.body.appendChild(a); a.click(); a.remove();
+        });
+        row.querySelector('.hist-copy').addEventListener('click', () => {
+          navigator.clipboard.writeText(item.text || '').then(() => {
+            const b = row.querySelector('.hist-copy'); const o = b.innerHTML;
+            b.innerHTML = '<svg class="w-4 h-4 text-cta-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+            setTimeout(() => b.innerHTML = o, 1200);
+          }).catch(() => {});
+        });
+        row.querySelector('.hist-del').addEventListener('click', () => {
+          let arr = loadHistory(); arr = arr.filter(x => x.id !== item.id); saveHistory(arr); renderHistory();
+        });
+        list.appendChild(row);
+      });
+    }
+    $('historyClear').addEventListener('click', () => {
+      if (!loadHistory().length) return;
+      if (window.confirm('Clear all saved generations from this device?')) { saveHistory([]); renderHistory(); }
+    });
+    renderHistory();
+
     // init captcha state
     if (isVerified()) { revealApi(); } else { loadChallenge(); }
     loadLanguages();
