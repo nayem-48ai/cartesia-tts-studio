@@ -9,7 +9,7 @@
   <meta name="author" content="TNxBD Studio" />
   <meta name="robots" content="index, follow, max-image-preview:large" />
   <meta name="theme-color" content="#6366f1" />
-  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
+  <link rel="icon" href="/static/favicon.gif" type="image/gif" />
   <script>
     (function () {
       try {
@@ -187,7 +187,7 @@
             <rect x="19" y="7" width="2.4" height="10" rx="1.2" fill="currentColor" stroke="none"/>
           </g>
         </svg>
-        <span class="font-extrabold text-lg tracking-tight">TNxBD <span class="text-brand-500">Studio</span></span>
+        <span class="font-extrabold text-lg tracking-tight">TNxBD <span class="text-brand-600">Studio</span></span>
       </div>
       <div class="flex items-center gap-2">
         <a href="/library" aria-label="Voice Library" class="inline-flex items-center gap-1.5 text-slate-600 dark:text-slate-300 hover:text-brand-600 px-2 sm:px-3 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">
@@ -676,7 +676,6 @@
     </div>
   </div>
 
-  <script src="/static/lame.min.js"></script>
   <script>
     const PLACEHOLDERS = {
       bn: 'এখানে আপনার লেখা লিখুন বা পেস্ট করুন…',
@@ -1070,7 +1069,7 @@
       ['fmtMp3', 'fmtWav'].forEach(id => {
         const on = $(id).getAttribute('aria-pressed') === 'true';
         $(id).className = 'px-3 py-1.5 text-sm font-semibold cursor-pointer transition-colors ' +
-          (on ? 'bg-brand-500 text-white' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800');
+          (on ? 'bg-brand-600 text-white' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800');
       });
     }
     function setFmt(f) {
@@ -1240,7 +1239,20 @@
       for (let i = 0; i < f.length; i++) { let s = Math.max(-1, Math.min(1, f[i])); out[i] = s < 0 ? s * 0x8000 : s * 0x7FFF; }
       return out;
     }
-    function bufferToMp3(buffer) {
+    let _lamePromise = null;
+    function ensureLame() {
+      if (typeof lamejs !== 'undefined' && lamejs.Mp3Encoder) return Promise.resolve();
+      if (_lamePromise) return _lamePromise;
+      _lamePromise = new Promise((res, rej) => {
+        const s = document.createElement('script');
+        s.src = '/static/lame.min.js'; s.async = true;
+        s.onload = () => res(); s.onerror = () => rej(new Error('lame load failed'));
+        document.head.appendChild(s);
+      });
+      return _lamePromise;
+    }
+    async function bufferToMp3(buffer) {
+      await ensureLame();
       if (typeof lamejs === 'undefined' || !lamejs.Mp3Encoder) throw new Error('mp3 unavailable');
       const ch = buffer.numberOfChannels, sr = buffer.sampleRate;
       const enc = new lamejs.Mp3Encoder(ch, sr, 128);
