@@ -361,12 +361,20 @@
             <div class="flex-1 min-w-0">
               <p class="text-sm font-semibold text-brand-700 dark:text-brand-300">Merged audio</p>
               <p id="mergedMeta" class="text-[11px] font-medium text-slate-600 dark:text-slate-400"></p>
+              <div class="mt-2 h-1.5 w-full rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+                <div id="mergeProgress" class="h-full w-0 bg-cta-500 transition-all duration-200"></div>
+              </div>
               <audio id="mergedAudio" class="hidden"></audio>
             </div>
-            <a id="mergedDownload" href="#" download="merged.wav" class="shrink-0 cursor-pointer inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 dark:text-brand-300 hover:text-brand-700 px-3 py-2 rounded-lg hover:bg-brand-50 dark:hover:bg-slate-800 transition-colors">
-              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" stroke-linecap="round" stroke-linejoin="round"/></svg>
-              WAV
-            </a>
+            <div class="flex items-center gap-2 shrink-0">
+              <select id="mergedFmt" class="bg-slate-100 dark:bg-slate-800 rounded-lg px-2 py-1.5 text-sm font-semibold text-slate-700 dark:text-slate-200 outline-none cursor-pointer" aria-label="Merged file format">
+                <option value="wav" selected>WAV</option><option value="mp3">MP3</option>
+              </select>
+              <a id="mergedDownload" href="#" download="merged.wav" class="cursor-pointer inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 dark:text-brand-300 hover:text-brand-700 px-3 py-2 rounded-lg hover:bg-brand-50 dark:hover:bg-slate-800 transition-colors">
+                <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Download
+              </a>
+            </div>
           </div>
         </section>
 
@@ -667,6 +675,7 @@
     </div>
   </div>
 
+  <script src="/static/lame.min.js"></script>
   <script>
     const PLACEHOLDERS = {
       bn: 'এখানে আপনার লেখা লিখুন বা পেস্ট করুন…',
@@ -1134,10 +1143,10 @@
         row.querySelector('.hist-edit').addEventListener('click', (e) => { e.stopPropagation(); recallText(item); });
         row.querySelector('[data-recall]').addEventListener('click', () => recallText(item));
         row.querySelector('.hist-del').addEventListener('click', () => {
-          let arr = loadHistory(); arr = arr.filter(x => x.id !== item.id); saveHistory(arr); selectedIds.delete(item.id); renderHistory();
+          let arr = loadHistory(); arr = arr.filter(x => x.id !== item.id); saveHistory(arr); removeSelection(item.id); renderHistory();
         });
         row.querySelector('.hist-select').addEventListener('change', (e) => {
-          if (e.target.checked) selectedIds.add(item.id); else selectedIds.delete(item.id);
+          if (e.target.checked) addSelection(item.id); else removeSelection(item.id);
           syncSelectAll();
         });
         list.appendChild(row);
@@ -1146,11 +1155,15 @@
     }
     $('historyClear').addEventListener('click', () => {
       if (!loadHistory().length) return;
-      if (window.confirm('Clear all saved generations from this device?')) { saveHistory([]); selectedIds.clear(); renderHistory(); }
+      if (window.confirm('Clear all saved generations from this device?')) { saveHistory([]); selectedIds.clear(); selectionOrder.length = 0; renderHistory(); }
     });
 
     // ---- Selection state + merge toolbar ----
     const selectedIds = new Set();
+    const selectionOrder = [];   // ids in the order the user selected them
+    function addSelection(id) { if (!selectedIds.has(id)) { selectedIds.add(id); selectionOrder.push(id); } }
+    function removeSelection(id) { selectedIds.delete(id); const i = selectionOrder.indexOf(id); if (i >= 0) selectionOrder.splice(i, 1); }
+    function selectedItems() { const h = loadHistory(); return selectionOrder.filter(id => h.some(v => v.id === id)).map(id => h.find(v => v.id === id)); }
     function syncSelectAll() {
       const h = loadHistory();
       const all = h.length > 0 && h.every(v => selectedIds.has(v.id));
@@ -1196,6 +1209,27 @@
       }
       return new Blob([ab], { type: 'audio/wav' });
     }
+    function floatToInt16(f) {
+      const out = new Int16Array(f.length);
+      for (let i = 0; i < f.length; i++) { let s = Math.max(-1, Math.min(1, f[i])); out[i] = s < 0 ? s * 0x8000 : s * 0x7FFF; }
+      return out;
+    }
+    function bufferToMp3(buffer) {
+      if (typeof lamejs === 'undefined' || !lamejs.Mp3Encoder) throw new Error('mp3 unavailable');
+      const ch = buffer.numberOfChannels, sr = buffer.sampleRate;
+      const enc = new lamejs.Mp3Encoder(ch, sr, 128);
+      const block = 1152;
+      const L = floatToInt16(buffer.getChannelData(0));
+      const R = ch > 1 ? floatToInt16(buffer.getChannelData(1)) : L;
+      const data = [];
+      for (let i = 0; i < L.length; i += block) {
+        const lc = L.subarray(i, i + block), rc = R.subarray(i, i + block);
+        const mp3 = ch > 1 ? enc.encodeBuffer(lc, rc) : enc.encodeBuffer(lc);
+        if (mp3.length) data.push(new Uint8Array(mp3));
+      }
+      const end = enc.flush(); if (end.length) data.push(new Uint8Array(end));
+      return new Blob(data, { type: 'audio/mpeg' });
+    }
     async function renderAtSpeed(buffer, speed) {
       if (!speed || speed === 1) return buffer;
       const off = new OfflineAudioContext(buffer.numberOfChannels, Math.max(1, Math.ceil(buffer.length / speed)), buffer.sampleRate);
@@ -1203,29 +1237,49 @@
       return await off.startRendering();
     }
     let mergedRawBuffer = null, mergedUrl = null;
+    function setMergeProgress(pct, status) {
+      const bar = $('mergeProgress');
+      bar.style.width = Math.max(0, Math.min(100, pct)) + '%';
+      if (status) $('mergeStatus').textContent = status;
+    }
     async function applyMergedSpeed() {
       if (!mergedRawBuffer) return;
       const speed = parseFloat($('histSpeed').value) || 1;
+      const fmt = $('mergedFmt').value;
       const finalBuf = await renderAtSpeed(mergedRawBuffer, speed);
+      let blob, ext, type;
+      if (fmt === 'mp3') {
+        try { blob = await bufferToMp3(finalBuf); ext = 'mp3'; type = 'audio/mpeg'; }
+        catch (e) { blob = bufferToWav(finalBuf); ext = 'wav'; type = 'audio/wav'; }
+      } else { blob = bufferToWav(finalBuf); ext = 'wav'; type = 'audio/wav'; }
       if (mergedUrl) URL.revokeObjectURL(mergedUrl);
-      mergedUrl = URL.createObjectURL(bufferToWav(finalBuf));
-      $('mergedAudio').src = mergedUrl;
-      $('mergedMeta').textContent = selectedIds.size + ' clips · ' + speed + 'x · WAV';
+      mergedUrl = URL.createObjectURL(blob);
+      const au = $('mergedAudio'); au.src = mergedUrl; au.type = type;
+      const dl = $('mergedDownload'); dl.href = mergedUrl; dl.download = 'merged.' + ext;
+      const n = selectedItems().length;
+      $('mergedMeta').textContent = n + ' clips · ' + speed + 'x · ' + ext.toUpperCase();
       $('mergedPanel').classList.remove('hidden');
-      $('mergeStatus').textContent = selectedIds.size + ' clips merged';
     }
     async function buildMerged() {
-      const h = loadHistory();
-      const sel = h.filter(v => selectedIds.has(v.id));
+      const sel = selectedItems();
       if (sel.length < 2) { $('mergeStatus').textContent = 'Select at least 2 clips.'; return; }
-      $('mergeStatus').textContent = 'Merging…';
+      $('mergeBtn').disabled = true;
+      setMergeProgress(0, 'Preparing…');
       try {
         const dec = [];
-        for (const it of sel) dec.push(await decodeUrl(it.audio));
+        for (let i = 0; i < sel.length; i++) {
+          dec.push(await decodeUrl(sel[i].audio));
+          setMergeProgress((i + 1) / sel.length * 90, 'Decoding ' + (i + 1) + '/' + sel.length + '…');
+        }
         mergedRawBuffer = concatAudio(dec);
+        setMergeProgress(95, 'Rendering…');
         await applyMergedSpeed();
+        setMergeProgress(100, '');
+        $('mergeStatus').textContent = sel.length + ' clips merged';
       } catch (e) {
         $('mergeStatus').textContent = 'Merge failed (unsupported audio?).';
+      } finally {
+        $('mergeBtn').disabled = false;
       }
     }
 
@@ -1247,9 +1301,11 @@
     $('histSpeed').addEventListener('change', () => { if (mergedRawBuffer) applyMergedSpeed(); });
     $('histSelectAll').addEventListener('change', (e) => {
       const h = loadHistory();
-      if (e.target.checked) h.forEach(v => selectedIds.add(v.id)); else selectedIds.clear();
+      selectedIds.clear(); selectionOrder.length = 0;
+      if (e.target.checked) { h.slice().reverse().forEach(v => { selectedIds.add(v.id); selectionOrder.push(v.id); }); }
       renderHistory();
     });
+    $('mergedFmt').addEventListener('change', () => { if (mergedRawBuffer) applyMergedSpeed(); });
     $('mergedPlay').addEventListener('click', () => { const a = $('mergedAudio'); if (a.paused) a.play(); else a.pause(); });
     $('mergedAudio').addEventListener('play', () => { $('mergedPlay').innerHTML = '<svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>'; });
     $('mergedAudio').addEventListener('pause', () => { $('mergedPlay').innerHTML = '<svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>'; });
