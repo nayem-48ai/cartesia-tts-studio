@@ -1182,16 +1182,19 @@
       const buf = await r.arrayBuffer();
       return await actx().decodeAudioData(buf);
     }
-    function concatAudio(buffers) {
+    function concatAudio(buffers, gapSec) {
+      gapSec = gapSec || 0;
       const c = actx();
       const ch = Math.max.apply(null, buffers.map(b => b.numberOfChannels));
-      const len = buffers.reduce((s, b) => s + b.length, 0);
       const sr = buffers[0].sampleRate;
+      const gap = Math.round(sr * gapSec);
+      const len = buffers.reduce((s, b) => s + b.length, 0) + Math.max(0, buffers.length - 1) * gap;
       const out = c.createBuffer(ch, len, sr);
       let off = 0;
-      buffers.forEach(b => {
+      buffers.forEach((b, idx) => {
         for (let i = 0; i < ch; i++) out.getChannelData(i).set(b.getChannelData(Math.min(i, b.numberOfChannels - 1)), off);
         off += b.length;
+        if (idx < buffers.length - 1) off += gap; // brief silence between clips
       });
       return out;
     }
@@ -1271,7 +1274,7 @@
           dec.push(await decodeUrl(sel[i].audio));
           setMergeProgress((i + 1) / sel.length * 90, 'Decoding ' + (i + 1) + '/' + sel.length + '…');
         }
-        mergedRawBuffer = concatAudio(dec);
+        mergedRawBuffer = concatAudio(dec, 0.25);
         setMergeProgress(95, 'Rendering…');
         await applyMergedSpeed();
         setMergeProgress(100, '');
