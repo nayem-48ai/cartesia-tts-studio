@@ -294,7 +294,14 @@
             <div class="flex-1 min-w-0">
               <div class="flex items-center justify-between">
                 <p class="text-sm font-semibold text-cta-700 dark:text-cta-400">Audio ready</p>
-                <span id="audioMeta" class="text-[11px] font-medium text-slate-600"></span>
+                <span class="flex items-center gap-2 text-[11px] font-medium text-slate-600 dark:text-slate-400">
+                  <span id="audioMeta" class="tabular-nums"></span>
+                  <span class="inline-flex items-center gap-1">Speed
+                    <select id="playbackRate" class="bg-transparent font-semibold outline-none cursor-pointer rounded" aria-label="Playback speed">
+                      <option value="0.75">0.75x</option><option value="1" selected>1x</option><option value="1.25">1.25x</option><option value="1.5">1.5x</option><option value="2">2x</option>
+                    </select>
+                  </span>
+                </span>
               </div>
               <div class="mt-2 flex items-center gap-3">
                 <span id="curTime" class="text-xs font-medium text-slate-600 dark:text-slate-400 tabular-nums w-10 text-right">0:00</span>
@@ -326,8 +333,41 @@
             </h2>
             <button id="historyClear" class="text-xs font-semibold text-slate-600 dark:text-slate-400 hover:text-red-500 px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">Clear all</button>
           </div>
+
+          <div class="mt-3 flex flex-wrap items-center gap-2">
+            <label class="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-600 dark:text-slate-400 cursor-pointer select-none">
+              <input id="histSelectAll" type="checkbox" class="w-4 h-4 rounded cursor-pointer accent-brand-500" /> Select all
+            </label>
+            <button id="mergeBtn" disabled class="inline-flex items-center gap-1.5 text-xs font-semibold text-white bg-brand-600 hover:bg-brand-700 disabled:opacity-50 disabled:cursor-not-allowed px-3 py-1.5 rounded-lg transition-colors cursor-pointer">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 12h14M5 12l4-4M5 12l4 4" stroke-linecap="round" stroke-linejoin="round"/><path d="M19 12l-4-4M19 12l-4 4" stroke-linecap="round" stroke-linejoin="round" transform="translate(0 0)"/></svg>
+              Merge selected
+            </button>
+            <label class="inline-flex items-center gap-1 text-xs font-semibold text-slate-600 dark:text-slate-400">Speed
+              <select id="histSpeed" class="bg-slate-100 dark:bg-slate-800 rounded-lg px-2 py-1 outline-none cursor-pointer">
+                <option value="0.75">0.75x</option><option value="1" selected>1x</option><option value="1.25">1.25x</option><option value="1.5">1.5x</option><option value="2">2x</option>
+              </select>
+            </label>
+            <span id="mergeStatus" class="text-xs font-medium text-slate-600 dark:text-slate-400"></span>
+          </div>
+
           <p id="historyEmpty" class="mt-3 text-sm text-slate-600 dark:text-slate-400">No generations yet — your recent clips will appear here (saved on this device).</p>
           <div id="historyList" class="mt-3 space-y-2"></div>
+
+          <!-- Merged output -->
+          <div id="mergedPanel" class="mt-4 hidden rounded-xl border border-brand-200 dark:border-brand-800 bg-brand-50 dark:bg-brand-900/20 p-4 flex items-center gap-4">
+            <button id="mergedPlay" class="w-11 h-11 shrink-0 grid place-items-center rounded-full bg-cta-500 hover:bg-cta-600 text-white cursor-pointer transition-colors" aria-label="Play merged audio">
+              <svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            </button>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm font-semibold text-brand-700 dark:text-brand-300">Merged audio</p>
+              <p id="mergedMeta" class="text-[11px] font-medium text-slate-600 dark:text-slate-400"></p>
+              <audio id="mergedAudio" class="hidden"></audio>
+            </div>
+            <a id="mergedDownload" href="#" download="merged.wav" class="shrink-0 cursor-pointer inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 dark:text-brand-300 hover:text-brand-700 px-3 py-2 rounded-lg hover:bg-brand-50 dark:hover:bg-slate-800 transition-colors">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              WAV
+            </a>
+          </div>
         </section>
 
         <!-- API section (expandable, captcha-gated curl) -->
@@ -878,6 +918,7 @@
             lang: currentLang,
             model: $('modelSel').value,
             voiceName: vName,
+            voiceId: getVoiceId(),
             fmt: getFmt(),
             text: text.slice(0, 140),
             audio: dataUrl
@@ -1050,17 +1091,18 @@
       h.forEach(item => {
         const row = document.createElement('div');
         row.className = 'flex items-center gap-3 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2';
+        const sel = selectedIds.has(item.id);
         row.innerHTML =
-          '<button class="hist-play w-9 h-9 shrink-0 grid place-items-center rounded-full bg-cta-500 hover:bg-cta-600 text-white cursor-pointer transition-colors" aria-label="Play clip">' +
-            '<svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>' +
-          '</button>' +
-          '<div class="flex-1 min-w-0">' +
+          '<input type="checkbox" class="hist-select shrink-0 w-4 h-4 rounded cursor-pointer accent-brand-500" data-id="' + item.id + '" ' + (sel ? 'checked' : '') + ' aria-label="Select clip" />' +
+          '<button class="hist-play w-9 h-9 shrink-0 grid place-items-center rounded-full bg-cta-500 hover:bg-cta-600 text-white cursor-pointer transition-colors" aria-label="Play clip"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg></button>' +
+          '<div class="flex-1 min-w-0 cursor-pointer" data-recall="' + item.id + '" title="Load text into editor">' +
             '<p class="text-sm font-semibold text-slate-700 dark:text-slate-200 truncate">' + escHtml(item.voiceName || 'Voice') + '</p>' +
             '<p class="text-xs text-slate-600 dark:text-slate-400 truncate">' + escHtml((item.text || '').replace(/\s+/g, ' ')) + ' · ' + (item.lang || '') + ' · ' + (item.model || '') + ' · ' + (item.fmt || 'mp3').toUpperCase() + '</p>' +
           '</div>' +
           '<div class="flex items-center gap-1 shrink-0">' +
             '<button class="hist-dl w-8 h-8 grid place-items-center rounded-lg text-brand-600 dark:text-brand-300 hover:bg-brand-50 dark:hover:bg-slate-800 cursor-pointer transition-colors" aria-label="Download clip"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 3v12m0 0 4-4m-4 4-4-4M5 21h14" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
             '<button class="hist-copy w-8 h-8 grid place-items-center rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-colors" aria-label="Copy text"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10" stroke-linecap="round"/></svg></button>' +
+            '<button class="hist-edit w-8 h-8 grid place-items-center rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-colors" aria-label="Load text into editor" data-recall="' + item.id + '"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 20h4L18.5 9.5a2.1 2.1 0 0 0-3-3L5 17v3z" stroke-linejoin="round"/></svg></button>' +
             '<button class="hist-del w-8 h-8 grid place-items-center rounded-lg text-slate-600 dark:text-slate-300 hover:text-red-500 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer transition-colors" aria-label="Delete clip"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M5 7h14M9 7V5h6v2M6 7l1 13h10l1-13" stroke-linecap="round" stroke-linejoin="round"/></svg></button>' +
           '</div>' +
           '<audio class="hidden hist-audio" src="' + item.audio + '"></audio>';
@@ -1071,6 +1113,7 @@
           if (playing) { au.pause(); }
           else {
             document.querySelectorAll('#historyList audio').forEach(o => { if (o !== au) o.pause(); });
+            au.playbackRate = parseFloat($('histSpeed').value) || 1;
             au.play();
           }
         });
@@ -1088,16 +1131,130 @@
             setTimeout(() => b.innerHTML = o, 1200);
           }).catch(() => {});
         });
+        row.querySelector('.hist-edit').addEventListener('click', (e) => { e.stopPropagation(); recallText(item); });
+        row.querySelector('[data-recall]').addEventListener('click', () => recallText(item));
         row.querySelector('.hist-del').addEventListener('click', () => {
-          let arr = loadHistory(); arr = arr.filter(x => x.id !== item.id); saveHistory(arr); renderHistory();
+          let arr = loadHistory(); arr = arr.filter(x => x.id !== item.id); saveHistory(arr); selectedIds.delete(item.id); renderHistory();
+        });
+        row.querySelector('.hist-select').addEventListener('change', (e) => {
+          if (e.target.checked) selectedIds.add(item.id); else selectedIds.delete(item.id);
+          syncSelectAll();
         });
         list.appendChild(row);
       });
+      syncSelectAll();
     }
     $('historyClear').addEventListener('click', () => {
       if (!loadHistory().length) return;
-      if (window.confirm('Clear all saved generations from this device?')) { saveHistory([]); renderHistory(); }
+      if (window.confirm('Clear all saved generations from this device?')) { saveHistory([]); selectedIds.clear(); renderHistory(); }
     });
+
+    // ---- Selection state + merge toolbar ----
+    const selectedIds = new Set();
+    function syncSelectAll() {
+      const h = loadHistory();
+      const all = h.length > 0 && h.every(v => selectedIds.has(v.id));
+      const some = h.some(v => selectedIds.has(v.id));
+      const sa = $('histSelectAll');
+      sa.checked = all; sa.indeterminate = !all && some;
+      $('mergeBtn').disabled = !some;
+      $('mergeStatus').textContent = some ? (selectedIds.size + ' selected') : '';
+    }
+
+    // ---- Web Audio merge utilities ----
+    let _actx = null;
+    function actx() { _actx = _actx || new (window.AudioContext || window.webkitAudioContext)(); return _actx; }
+    async function decodeUrl(url) {
+      const r = await fetch(url);
+      const buf = await r.arrayBuffer();
+      return await actx().decodeAudioData(buf);
+    }
+    function concatAudio(buffers) {
+      const c = actx();
+      const ch = Math.max.apply(null, buffers.map(b => b.numberOfChannels));
+      const len = buffers.reduce((s, b) => s + b.length, 0);
+      const sr = buffers[0].sampleRate;
+      const out = c.createBuffer(ch, len, sr);
+      let off = 0;
+      buffers.forEach(b => {
+        for (let i = 0; i < ch; i++) out.getChannelData(i).set(b.getChannelData(Math.min(i, b.numberOfChannels - 1)), off);
+        off += b.length;
+      });
+      return out;
+    }
+    function bufferToWav(buffer) {
+      const ch = buffer.numberOfChannels, sr = buffer.sampleRate, len = buffer.length;
+      const block = ch * 2, dataSize = len * block;
+      const ab = new ArrayBuffer(44 + dataSize); const dv = new DataView(ab); let p = 0;
+      const wstr = s => { for (let i = 0; i < s.length; i++) dv.setUint8(p++, s.charCodeAt(i)); };
+      const u32 = v => { dv.setUint32(p, v, true); p += 4; };
+      const u16 = v => { dv.setUint16(p, v, true); p += 2; };
+      wstr('RIFF'); u32(36 + dataSize); wstr('WAVE'); wstr('fmt '); u32(16); u16(1); u16(ch); u32(sr); u32(sr * block); u16(block); u16(16); wstr('data'); u32(dataSize);
+      for (let i = 0; i < len; i++) for (let c = 0; c < ch; c++) {
+        let s = Math.max(-1, Math.min(1, buffer.getChannelData(c)[i]));
+        dv.setInt16(p, s < 0 ? s * 0x8000 : s * 0x7FFF, true); p += 2;
+      }
+      return new Blob([ab], { type: 'audio/wav' });
+    }
+    async function renderAtSpeed(buffer, speed) {
+      if (!speed || speed === 1) return buffer;
+      const off = new OfflineAudioContext(buffer.numberOfChannels, Math.max(1, Math.ceil(buffer.length / speed)), buffer.sampleRate);
+      const src = off.createBufferSource(); src.buffer = buffer; src.playbackRate.value = speed; src.connect(off.destination); src.start();
+      return await off.startRendering();
+    }
+    let mergedRawBuffer = null, mergedUrl = null;
+    async function applyMergedSpeed() {
+      if (!mergedRawBuffer) return;
+      const speed = parseFloat($('histSpeed').value) || 1;
+      const finalBuf = await renderAtSpeed(mergedRawBuffer, speed);
+      if (mergedUrl) URL.revokeObjectURL(mergedUrl);
+      mergedUrl = URL.createObjectURL(bufferToWav(finalBuf));
+      $('mergedAudio').src = mergedUrl;
+      $('mergedMeta').textContent = selectedIds.size + ' clips · ' + speed + 'x · WAV';
+      $('mergedPanel').classList.remove('hidden');
+      $('mergeStatus').textContent = selectedIds.size + ' clips merged';
+    }
+    async function buildMerged() {
+      const h = loadHistory();
+      const sel = h.filter(v => selectedIds.has(v.id));
+      if (sel.length < 2) { $('mergeStatus').textContent = 'Select at least 2 clips.'; return; }
+      $('mergeStatus').textContent = 'Merging…';
+      try {
+        const dec = [];
+        for (const it of sel) dec.push(await decodeUrl(it.audio));
+        mergedRawBuffer = concatAudio(dec);
+        await applyMergedSpeed();
+      } catch (e) {
+        $('mergeStatus').textContent = 'Merge failed (unsupported audio?).';
+      }
+    }
+
+    // ---- Text recall: load a clip's text back into the editor ----
+    async function recallText(item) {
+      try { $('textInput').value = item.text || ''; } catch (e) {}
+      $('charCount').textContent = ($('textInput').value.length) + ' characters';
+      updateSnippet();
+      await loadLang(item.lang);
+      if (item.lang === 'uid') { $('uidInput').value = item.voiceId || ''; }
+      else if (item.voiceId) { try { $('voiceSel').value = item.voiceId; } catch (e) {} saveSel('tts_voice_' + item.lang, item.voiceId); }
+      updateVoiceInfo();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      $('textInput').focus();
+    }
+
+    // ---- Wiring ----
+    $('mergeBtn').addEventListener('click', buildMerged);
+    $('histSpeed').addEventListener('change', () => { if (mergedRawBuffer) applyMergedSpeed(); });
+    $('histSelectAll').addEventListener('change', (e) => {
+      const h = loadHistory();
+      if (e.target.checked) h.forEach(v => selectedIds.add(v.id)); else selectedIds.clear();
+      renderHistory();
+    });
+    $('mergedPlay').addEventListener('click', () => { const a = $('mergedAudio'); if (a.paused) a.play(); else a.pause(); });
+    $('mergedAudio').addEventListener('play', () => { $('mergedPlay').innerHTML = '<svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M6 5h4v14H6zM14 5h4v14h-4z"/></svg>'; });
+    $('mergedAudio').addEventListener('pause', () => { $('mergedPlay').innerHTML = '<svg class="w-5 h-5" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>'; });
+    $('playbackRate').addEventListener('change', () => { audio.playbackRate = parseFloat($('playbackRate').value) || 1; });
+
     renderHistory();
 
     // init captcha state
