@@ -26,6 +26,7 @@ app = Flask(__name__)
 # auto deployment URLs, etc.) to speakee.tnxbd.top so a single canonical site exists.
 CANONICAL_HOST = "speakee.tnxbd.top"
 ALLOWED_HOSTS = {CANONICAL_HOST, "localhost", "127.0.0.1"}
+SITE_URL = "https://" + CANONICAL_HOST
 
 @app.before_request
 def enforce_canonical_host():
@@ -345,6 +346,23 @@ def tts_alias():
 @app.route("/voices", methods=["GET"])
 def voices_alias():
     return api_voices()
+
+
+@app.route("/robots.txt", methods=["GET"])
+def robots_txt():
+    body = "User-agent: *\nAllow: /\nSitemap: %s/sitemap.xml\n" % SITE_URL
+    return Response(body, mimetype="text/plain")
+
+
+@app.route("/sitemap.xml", methods=["GET"])
+def sitemap_xml():
+    pages = ["/", "/library"]
+    lines = ['<?xml version="1.0" encoding="UTF-8"?>',
+             '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
+    for p in pages:
+        lines.append("  <url><loc>%s%s</loc></url>" % (SITE_URL, p))
+    lines.append("</urlset>")
+    return Response("\n".join(lines), mimetype="application/xml")
 
 
 if __name__ == "__main__":
