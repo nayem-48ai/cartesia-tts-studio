@@ -27,6 +27,9 @@
       body { font-family: '"Plus Jakarta Sans"', system-ui, sans-serif; }
       @keyframes libGlow { 0%,100%{filter:drop-shadow(0 0 0 rgba(99,102,241,0))} 50%{filter:drop-shadow(0 0 5px rgba(99,102,241,.55))} }
       .lib-ico { animation: libGlow 3.2s ease-in-out infinite; }
+      @keyframes spin { to { transform: rotate(360deg); } }
+      .spinner { width:14px; height:14px; border:2px solid rgba(99,102,241,.3); border-top-color:#6366f1; border-radius:50%; animation:spin .7s linear infinite; display:inline-block; }
+      @media (prefers-reduced-motion: reduce) { .lib-ico { animation: none !important; } html { scroll-behavior: auto !important; } }
     </style>
   </head>
   <body class="bg-slate-50 dark:bg-slate-950 text-slate-800 dark:text-slate-200 min-h-screen">
@@ -85,6 +88,13 @@
         </div>
       </div>
 
+      <div class="mt-4 flex flex-wrap items-center gap-2">
+        <button id="chipAll" type="button" class="cursor-pointer text-sm font-semibold px-3 py-1.5 rounded-full border transition-colors" aria-pressed="true">All</button>
+        <button id="chipFav" type="button" class="cursor-pointer text-sm font-semibold px-3 py-1.5 rounded-full border transition-colors" aria-pressed="false">
+          <span class="inline-flex items-center gap-1"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 6.9 20.4l1.4-6.8L3.2 9l6.9-.7z"/></svg> Favorites</span>
+        </button>
+        <button id="chipOwned" type="button" class="cursor-pointer text-sm font-semibold px-3 py-1.5 rounded-full border transition-colors" aria-pressed="false">Owned by me</button>
+      </div>
       <p id="resultCount" class="mt-3 text-sm text-slate-600"></p>
       <div id="grid" class="mt-4 grid sm:grid-cols-2 gap-3"></div>
     </main>
@@ -92,6 +102,10 @@
     <script>
       const $ = (id) => document.getElementById(id);
       let ALL = [], LANG_NAMES = {};
+      let FAVS = [];
+      try { FAVS = JSON.parse(localStorage.getItem('tts_favs') || '[]'); } catch (e) {}
+      let activeChip = 'all';
+      const SAMPLE = { bn:'এটি একটি ভয়েস প্রিভিউ।', hi:'नमस्ते, यह एक आवाज़ पूर्वावलोकन है।', en:'Hello, this is a short voice preview.', es:'Hola, esta es una vista previa de voz.', fr:'Bonjour, voici un aperçu vocal.', de:'Hallo, hier ist eine Sprachvorschau.', ar:'مرحبا، هذه معاينة صوتية قصيرة.', ja:'こんにちは、これは音声プレビューです。', zh:'你好，这是一个简短的语音预览。', default:'Hello, this is a short voice preview.' };
       const esc = (s) => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
       const genderLabel = (g) => (g === 'feminine') ? 'Female' : (g === 'masculine') ? 'Male' : (g === 'gender_neutral') ? 'Neutral' : 'High Profiled person';
       const copyText = (text, btn) => navigator.clipboard.writeText(text).then(() => { const o = btn.textContent; btn.textContent = 'Copied!'; setTimeout(() => btn.textContent = o, 1400); }).catch(() => {});
@@ -135,10 +149,12 @@
       function render() {
         const q = $('search').value.trim().toLowerCase();
         const g = $('fGender').value, l = $('fLang').value, t = $('fTag').value;
-        const rows = ALL.filter(v => {
+        let rows = ALL.filter(v => {
           if (g !== 'All' && genderLabel(v.gender) !== g) return false;
           if (l !== 'All' && v.language !== l) return false;
           if (t !== 'All' && v.tag !== t) return false;
+          if (activeChip === 'fav' && FAVS.indexOf(v.id) < 0) return false;
+          if (activeChip === 'owned' && !v.owner) return false;
           if (q) {
             const hay = [v.name, v.id, v.description, v.language, v.tag, v.gender, v.mode, v.country].join(' ').toLowerCase();
             if (!hay.includes(q)) return false;
@@ -148,26 +164,92 @@
         $('resultCount').textContent = rows.length + ' voice' + (rows.length === 1 ? '' : 's') + ' found';
         const grid = $('grid'); grid.innerHTML = '';
         rows.forEach(v => {
+          const fav = FAVS.indexOf(v.id) >= 0;
+          const owner = !!v.owner;
           const card = document.createElement('div');
           card.className = 'rounded-2xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 p-4 flex flex-col gap-2';
           card.innerHTML =
             '<div class="flex items-start justify-between gap-3">' +
               '<div class="min-w-0">' +
-                '<h3 class="font-semibold text-slate-800 dark:text-slate-100 truncate">' + esc(v.name) + '</h3>' +
+                '<div class="flex items-center gap-1.5">' +
+                  '<h3 class="font-semibold text-slate-800 dark:text-slate-100 truncate">' + esc(v.name) + '</h3>' +
+                  (owner ? '<span class="shrink-0 text-[10px] font-semibold uppercase tracking-wide text-cta-700 dark:text-cta-400 bg-cta-50 dark:bg-cta-600/15 px-1.5 py-0.5 rounded">Owned</span>' : '') +
+                '</div>' +
                 '<p class="mt-0.5 text-sm text-slate-600 dark:text-slate-400 line-clamp-2">' + esc(v.description || 'No description.') + '</p>' +
               '</div>' +
-              '<button class="shrink-0 inline-flex items-center gap-1 text-xs font-semibold text-brand-600 dark:text-brand-300 hover:text-brand-700 px-2 py-1 rounded-lg hover:bg-brand-50 dark:hover:bg-slate-800 cursor-pointer" data-id="' + esc(v.id) + '">Copy ID</button>' +
+              '<button class="star shrink-0 w-8 h-8 grid place-items-center rounded-lg cursor-pointer transition-colors ' + (fav ? 'text-amber-500 hover:bg-amber-50 dark:hover:bg-slate-800' : 'text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800') + '" data-id="' + esc(v.id) + '" aria-label="Toggle favorite" aria-pressed="' + fav + '">' +
+                '<svg class="w-5 h-5" viewBox="0 0 24 24" fill="' + (fav ? 'currentColor' : 'none') + '" stroke="currentColor" stroke-width="1.8"><path d="M12 2l2.9 6.3 6.9.7-5.1 4.6 1.4 6.8L12 17.8 6.9 20.4l1.4-6.8L3.2 9l6.9-.7z" stroke-linejoin="round"/></svg>' +
+              '</button>' +
             '</div>' +
             '<div class="flex flex-wrap gap-1.5">' +
               '<span class="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[11px] font-medium text-slate-600 dark:text-slate-300">' + esc(genderLabel(v.gender)) + '</span>' +
               '<span class="px-2 py-0.5 rounded-full bg-slate-100 dark:bg-slate-800 text-[11px] font-medium text-slate-600 dark:text-slate-300">' + esc(LANG_NAMES[v.language] || v.language) + '</span>' +
               '<span class="px-2 py-0.5 rounded-full bg-cta-50 dark:bg-cta-600/15 text-[11px] font-medium text-cta-700 dark:text-cta-400">' + esc(v.tag) + '</span>' +
             '</div>' +
-            '<code class="text-[11px] font-mono text-slate-600 break-all">' + esc(v.id) + '</code>';
+            '<div class="flex items-center justify-between gap-2">' +
+              '<code class="text-[11px] font-mono text-slate-600 break-all">' + esc(v.id) + '</code>' +
+              '<div class="flex items-center gap-1 shrink-0">' +
+                '<button class="copy-id inline-flex items-center gap-1 text-xs font-semibold text-brand-600 dark:text-brand-300 hover:text-brand-700 px-2 py-1 rounded-lg hover:bg-brand-50 dark:hover:bg-slate-800 cursor-pointer" data-id="' + esc(v.id) + '">Copy ID</button>' +
+                '<button class="preview inline-flex items-center gap-1 text-xs font-semibold text-slate-600 dark:text-slate-300 hover:text-brand-600 px-2 py-1 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer" data-id="' + esc(v.id) + '" data-lang="' + esc(v.language) + '" aria-label="Preview voice"><svg class="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg> Preview</button>' +
+              '</div>' +
+            '</div>' +
+            '<audio class="hidden prev-audio"></audio>';
           grid.appendChild(card);
         });
-        grid.querySelectorAll('button[data-id]').forEach(b => b.addEventListener('click', () => copyText(b.dataset.id, b)));
       }
+
+      // ---- Favorites, Owned filter, voice preview ----
+      function saveFavs() { try { localStorage.setItem('tts_favs', JSON.stringify(FAVS)); } catch (e) {} }
+      function toggleFav(id) { const i = FAVS.indexOf(id); if (i >= 0) FAVS.splice(i, 1); else FAVS.push(id); saveFavs(); }
+      function setChip(c) {
+        activeChip = c;
+        const map = { all: 'chipAll', fav: 'chipFav', owned: 'chipOwned' };
+        Object.keys(map).forEach(k => {
+          const on = (k === c);
+          const el = $(map[k]);
+          el.setAttribute('aria-pressed', String(on));
+          el.className = 'cursor-pointer text-sm font-semibold px-3 py-1.5 rounded-full border transition-colors ' +
+            (on ? 'bg-brand-500 text-white border-brand-500' : 'text-slate-600 dark:text-slate-400 border-slate-200 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800');
+        });
+        render();
+      }
+      async function previewVoice(id, lang, btn) {
+        const sample = SAMPLE[lang] || SAMPLE['default'];
+        const orig = btn.innerHTML;
+        btn.disabled = true;
+        btn.innerHTML = '<span class="spinner"></span>';
+        try {
+          const res = await fetch('/api/tts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ language: lang, model: 'sonic-3.5', voice_id: id, text: sample, format: 'mp3' }) });
+          if (!res.ok) throw new Error('preview');
+          const blob = await res.blob();
+          const card = btn.closest('.rounded-2xl');
+          const au = card.querySelector('.prev-audio');
+          document.querySelectorAll('.prev-audio').forEach(o => { if (o !== au) o.pause(); });
+          au.src = URL.createObjectURL(blob);
+          au.play();
+        } catch (e) {}
+        finally { btn.disabled = false; btn.innerHTML = orig; }
+      }
+      $('grid').addEventListener('click', (e) => {
+        const star = e.target.closest('.star');
+        if (star) {
+          const id = star.dataset.id;
+          toggleFav(id);
+          const on = FAVS.indexOf(id) >= 0;
+          star.setAttribute('aria-pressed', String(on));
+          star.classList.toggle('text-amber-500', on);
+          star.classList.toggle('text-slate-400', !on);
+          star.querySelector('svg').setAttribute('fill', on ? 'currentColor' : 'none');
+          if (activeChip === 'fav') render();
+          return;
+        }
+        const copy = e.target.closest('.copy-id');
+        if (copy) { copyText(copy.dataset.id, copy); return; }
+        const prev = e.target.closest('.preview');
+        if (prev) { previewVoice(prev.dataset.id, prev.dataset.lang, prev); return; }
+      });
+      ['chipAll', 'chipFav', 'chipOwned'].forEach(id => $(id).addEventListener('click', () => setChip(id === 'chipFav' ? 'fav' : id === 'chipOwned' ? 'owned' : 'all')));
+      setChip('all');
 
       init();
     </script>
