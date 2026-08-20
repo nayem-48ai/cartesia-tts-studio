@@ -249,14 +249,16 @@ def robots():
 
 @app.route("/sitemap.xml", methods=["GET"])
 def sitemap():
-    loc = "https://speakee.tnxbd.top/"
-    xml = (
-        '<?xml version="1.0" encoding="UTF-8"?>\n'
-        '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n'
-        f'  <url><loc>{loc}</loc><changefreq>weekly</changefreq><priority>1.0</priority></url>\n'
-        "</urlset>\n"
-    )
-    return Response(xml, mimetype="application/xml")
+    pages = [("/", "1.0"), ("/library", "0.8")]
+    lines = ['<?xml version="1.0" encoding="UTF-8"?>',
+             '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
+    for path, pri in pages:
+        lines.append(
+            '  <url><loc>https://speakee.tnxbd.top%s</loc>'
+            '<changefreq>weekly</changefreq><priority>%s</priority></url>' % (path, pri)
+        )
+    lines.append("</urlset>")
+    return Response("\n".join(lines), mimetype="application/xml")
 
 
 @app.route("/api/languages", methods=["GET"])
