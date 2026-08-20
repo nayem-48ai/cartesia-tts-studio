@@ -6,6 +6,7 @@
     <title>Voice Library — TNxBD Studio</title>
     <meta name="description" content="Browse 868+ AI voices with name, description and voice ID. Search by name, ID or description and filter by gender, language and tag. Copy any voice ID for the TTS API." />
     <meta name="robots" content="index, follow" />
+    <link rel="icon" type="image/svg+xml" href="/static/favicon.svg" />
     <link rel="canonical" href="https://speakee.tnxbd.top/library" />
     <meta property="og:type" content="website" />
     <meta property="og:title" content="Voice Library — TNxBD Studio" />
@@ -24,7 +25,7 @@
       } catch (e) {}
     </script>
     <style>
-      body { font-family: '"Plus Jakarta Sans"', system-ui, sans-serif; }
+      body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
       @keyframes libGlow { 0%,100%{filter:drop-shadow(0 0 0 rgba(99,102,241,0))} 50%{filter:drop-shadow(0 0 5px rgba(99,102,241,.55))} }
       .lib-ico { animation: libGlow 3.2s ease-in-out infinite; }
       @keyframes spin { to { transform: rotate(360deg); } }
@@ -139,7 +140,7 @@
       function populateFilters() {
         const genders = ['All', ...Array.from(new Set(ALL.map(v => genderLabel(v.gender))))];
         const langs = ['All', ...Array.from(new Set(ALL.map(v => v.language))).sort()];
-        const tags = ['All', ...Array.from(new Set(ALL.map(v => v.tag)))];
+        const tags = ['All', ...Array.from(new Set(ALL.map(v => v.tag).filter(Boolean)))];
         const fill = (sel, vals) => { sel.innerHTML = ''; vals.forEach(v => { const o = document.createElement('option'); o.value = v; o.textContent = (v === 'All') ? 'All' : (v === 'language' ? 'Language' : (LANG_NAMES[v] ? LANG_NAMES[v] + ' (' + v + ')' : v)); sel.appendChild(o); }); };
         fill($('fGender'), genders);
         fill($('fLang'), langs);
@@ -214,6 +215,8 @@
         render();
       }
       async function previewVoice(id, lang, btn) {
+        if (btn._busy) return;
+        btn._busy = true;
         const sample = SAMPLE[lang] || SAMPLE['default'];
         const orig = btn.innerHTML;
         btn.disabled = true;
@@ -228,7 +231,7 @@
           au.src = URL.createObjectURL(blob);
           au.play();
         } catch (e) {}
-        finally { btn.disabled = false; btn.innerHTML = orig; }
+        finally { btn.disabled = false; btn.innerHTML = orig; btn._busy = false; }
       }
       $('grid').addEventListener('click', (e) => {
         const star = e.target.closest('.star');
@@ -240,7 +243,8 @@
           star.classList.toggle('text-amber-500', on);
           star.classList.toggle('text-slate-400', !on);
           star.querySelector('svg').setAttribute('fill', on ? 'currentColor' : 'none');
-          if (activeChip === 'fav') render();
+          if (activeChip === 'fav' && !on) { const card = star.closest('.rounded-2xl'); if (card) card.remove(); }
+          else render();
           return;
         }
         const copy = e.target.closest('.copy-id');
