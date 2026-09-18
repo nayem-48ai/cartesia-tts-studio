@@ -13,6 +13,10 @@ A professional, multilingual AI text-to-speech web app. Generate lifelike speech
   bar + current/total timer**, and MP3 download. Light/dark mode included.
 - API: `POST /api/tts` → MP3, `GET /api/voices?language=bn`,
   `GET /api/models?language=bn`, `GET /api/languages`.
+- Voice settings (same as play.cartesia.ai, via POST body): `speed`
+  0.6–1.5 (default 1), `volume` 0.5–2.0 (default 1), `emotion` neutral +
+  57 more (default neutral). Full effect on sonic-3/3.5. Share links like
+  `?voice_id=…&speed=0.9&volume=1.5&emotion=sad` pre-fill the web UI.
 - No API key required by the caller — the app mints a short-lived public Cartesia
   token per request, and the voice catalog is embedded statically for instant loads.
 
@@ -30,7 +34,10 @@ curl -X POST https://tnxbd-tts.vercel.app/api/tts \
     "language": "bn",
     "model": "sonic-3.5",
     "voice_id": "59ba7dee-8f9a-432f-a6c0-ffb33666b654",
-    "text": "Your text here"
+    "text": "Your text here",
+    "speed": 0.9,
+    "volume": 1.5,
+    "emotion": "sad"
   }'
 ```
 

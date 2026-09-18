@@ -119,7 +119,23 @@ def get_token() -> str:
     return t
 
 
-# ---- Lightweight human-verification gate (math challenge -> signed token) ----
+# ---- Voice-style controls (mirrors play.cartesia.ai) ----
+# Cartesia `generation_config` is supported on sonic-3 / sonic-3.5 only.
+# Defaults match the playground: speed 1, volume 1, emotion neutral.
+GENCFG_MODELS = ("sonic-3", "sonic-3.5")
+EMOTIONS = {
+    "neutral", "happy", "excited", "enthusiastic", "elated", "euphoric",
+    "triumphant", "amazed", "surprised", "flirtatious", "curious", "content",
+    "peaceful", "serene", "calm", "grateful", "affectionate", "trust",
+    "sympathetic", "anticipation", "mysterious", "angry", "mad", "outraged",
+    "frustrated", "agitated", "threatened", "disgusted", "contempt", "envious",
+    "sarcastic", "ironic", "sad", "dejected", "melancholic", "disappointed",
+    "hurt", "guilty", "bored", "tired", "rejected", "nostalgic", "wistful",
+    "apologetic", "hesitant", "insecure", "confused", "resigned", "anxious",
+    "panicked", "alarmed", "scared", "proud", "confident", "distant",
+    "skeptical", "contemplative", "determined",
+}
+PRIMARY_EMOTIONS = ("neutral", "calm", "angry", "content", "sad", "scared")
 # The answer lives only server-side (signed into the challenge token). The
 # TTS endpoint requires a short-lived access token that is only issued after
 # the challenge is solved, so the working API call can never be recovered from
@@ -305,6 +321,29 @@ def api_tts():
     if fmt not in ("mp3", "wav"):
         fmt = "mp3"
 
+    # Voice-style controls (POST body first, URL query as fallback so
+    # playground-style share links like ?speed=0.9&volume=1.5&emotion=sad
+    # keep working). Same ranges/defaults as play.cartesia.ai.
+    def _num(name, default, lo, hi):
+        raw = body.get(name, request.args.get(name, default))
+        try:
+            val = float(raw)
+        except (TypeError, ValueError):
+            return None, f"invalid '{name}': must be a number"
+        if not (lo <= val <= hi):
+            return None, f"invalid '{name}': must be between {lo} and {hi}"
+        return val, None
+
+    speed, err = _num("speed", 1, 0.6, 1.5)
+    if err:
+        return {"error": err}, 400
+    volume, err = _num("volume", 1, 0.5, 2.0)
+    if err:
+        return {"error": err}, 400
+    emotion = str(body.get("emotion", request.args.get("emotion", "neutral")) or "neutral").strip().lower()
+    if emotion not in EMOTIONS:
+        return {"error": f"invalid 'emotion': '{emotion}'. Use one of: " + ", ".join(sorted(EMOTIONS))}, 400
+
     token = get_token()
     if fmt == "wav":
         output_format = {"container": "wav", "encoding": "pcm_s16le",
@@ -322,6 +361,13 @@ def api_tts():
     }
     if language != "uid":
         payload["language"] = language
+    # generation_config works on sonic-3/3.5. It is always sent for those
+    # models; for older models (sonic-2/turbo) it is only sent when the user
+    # explicitly picked non-default values (user priority first).
+    if model in GENCFG_MODELS or speed != 1 or volume != 1 or emotion != "neutral":
+        payload["generation_config"] = {
+            "speed": speed, "volume": volume, "emotion": emotion,
+        }
     payload = json.dumps(payload).encode()
 
     req = urllib.request.Request(
