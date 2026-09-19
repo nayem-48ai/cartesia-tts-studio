@@ -43,7 +43,8 @@ API_VERSION = "2026-03-01"
 # ---- Speech-to-text (Cartesia Ink, same free token flow as TTS) ----
 # Vercel serverless requests cap at ~4.5MB, so uploads must stay small.
 STT_MAX_BYTES = 4 * 1024 * 1024
-STT_DEFAULT_LANG = "bn"
+STT_DEFAULT_LANG = "auto"
+STT_AUTO = "auto"
 STT_LANGS = (
     "bn", "en", "hi", "ur", "es", "fr", "de", "ar", "ja", "ko", "pt",
     "it", "nl", "pl", "zh", "ru", "tr", "vi", "id", "ms", "ta", "te",
@@ -328,7 +329,8 @@ def stt_page():
 
 @app.route("/api/stt/languages", methods=["GET"])
 def api_stt_languages():
-    langs = [{"code": c, "name": STT_LANG_DISPLAY.get(c, c)} for c in STT_LANGS]
+    langs = [{"code": STT_AUTO, "name": "✨ Auto detect"}]
+    langs += [{"code": c, "name": STT_LANG_DISPLAY.get(c, c)} for c in STT_LANGS]
     return {"count": len(langs), "languages": langs, "default": STT_DEFAULT_LANG}
 
 
@@ -338,30 +340,57 @@ def _truthy(v, default=True):
     return str(v).strip().lower() in ("1", "true", "yes", "on")
 
 
-@app.route("/api/stt", methods=["POST"])
-def api_stt():
-    # multipart form (file + options) so browsers AND realtime chunk
-    # recorders can POST audio directly, same style as /api/tts.
-    language = (request.form.get("language") or request.args.get("language")
-                or STT_DEFAULT_LANG).strip().lower()
-    if language not in STT_LANGS:
-        return {"error": f"unsupported language '{language}'"}, 400
-    word_ts = _truthy(request.form.get("word_timestamps",
-                                      request.args.get("word_timestamps", "1")))
+# ---- STT engine 1 (primary): Cloudflare whisper-large-v3-turbo ----
+# Free, auto-detects language when omitted, handles mixed-language speech,
+# optional VAD preprocessing to keep noise out. Token from env (server only).
+CF_ACCT_ID = os.environ.get("CF_ACCT_ID", "f1df706095bba37d66e667b6fc546930")
+CF_WHISPER_MODEL = "@cf/openai/whisper-large-v3-turbo"
 
-    f = request.files.get("file")
-    if f is None or not (f.filename or "").strip():
-        return {"error": "missing 'file': upload audio as multipart form field 'file'"}, 400
-    audio = f.read()
-    if not audio:
-        return {"error": "empty audio file"}, 400
-    if len(audio) > STT_MAX_BYTES:
-        return {"error": f"audio too large ({len(audio)} bytes): keep clips under 4MB"}, 413
 
-    name = os.path.basename(f.filename or "audio").strip() or "audio"
-    name = re.sub(r"[^A-Za-z0-9._-]", "_", name)[-80:] or "audio"
-    mime = f.mimetype or "audio/webm"
+def _cf_stt(audio: bytes, language: str, word_ts: bool, vad: bool):
+    token = os.environ.get("CF_AI_TOKEN")
+    if not token:
+        return None, "STT engine not configured"
+    payload = {"audio": base64.b64encode(audio).decode(),
+               "vad_filter": bool(vad)}
+    if language != STT_AUTO:
+        payload["language"] = language
+    req = urllib.request.Request(
+        f"https://api.cloudflare.com/client/v4/accounts/{CF_ACCT_ID}"
+        f"/ai/run/{CF_WHISPER_MODEL}",
+        data=json.dumps(payload).encode(), method="POST",
+        headers={"Authorization": "Bearer " + token,
+                 "Content-Type": "application/json"})
+    try:
+        with urllib.request.urlopen(req, timeout=120) as r:
+            data = json.load(r)
+    except urllib.error.HTTPError as e:
+        return None, f"STT engine error {e.code}: {e.read().decode()[:200]}"
+    if not data.get("success", True):
+        errs = data.get("errors") or [{"message": "unknown engine error"}]
+        return None, f"STT engine error: {errs[0].get('message', errs)}"[:300]
+    res = data.get("result") or {}
+    info = res.get("transcription_info") or {}
+    out = {"text": (res.get("text") or "").strip(),
+           "language": info.get("language") or language,
+           "duration": info.get("duration"),
+           "engine": "whisper-large-v3-turbo"}
+    if info.get("language_probability") is not None:
+        out["detection_confidence"] = round(float(info["language_probability"]), 3)
+    if word_ts:
+        words = []
+        for seg in res.get("segments") or []:
+            for w in seg.get("words") or []:
+                words.append({"word": str(w.get("word") or "").strip(),
+                              "start": w.get("start"), "end": w.get("end")})
+        words = [w for w in words if w["word"]]
+        out["words"] = words
+        out["word_count"] = len(words)
+    return out, None
 
+
+# ---- STT engine 2 (fallback): Cartesia ink-whisper, explicit language ----
+def _cartesia_stt(audio: bytes, name: str, mime: str, language: str, word_ts: bool):
     token = get_token()
     boundary = "stt-%s" % secrets.token_hex(8)
 
@@ -388,16 +417,53 @@ def api_stt():
         with urllib.request.urlopen(req, timeout=120) as r:
             data = json.load(r)
     except urllib.error.HTTPError as e:
-        return {"error": f"STT error {e.code}: {e.read().decode()[:300]}"}, 502
+        return None, f"STT error {e.code}: {e.read().decode()[:300]}"
 
     out = {"text": (data.get("text") or "").strip(),
            "language": data.get("language", language),
            "duration": data.get("duration"),
-           "request_id": data.get("request_id")}
+           "request_id": data.get("request_id"),
+           "engine": "ink-whisper"}
     if word_ts and isinstance(data.get("words"), list):
         out["words"] = [{"word": w.get("word"), "start": w.get("start"),
                          "end": w.get("end")} for w in data["words"]]
         out["word_count"] = len(out["words"])
+    return out, None
+
+
+@app.route("/api/stt", methods=["POST"])
+def api_stt():
+    # multipart form (file + options) so browsers AND realtime chunk
+    # recorders can POST audio directly, same style as /api/tts.
+    # language="auto" (default) detects the spoken language per request.
+    language = (request.form.get("language") or request.args.get("language")
+                or STT_DEFAULT_LANG).strip().lower()
+    if language != STT_AUTO and language not in STT_LANGS:
+        return {"error": f"unsupported language '{language}'"}, 400
+    word_ts = _truthy(request.form.get("word_timestamps",
+                                      request.args.get("word_timestamps", "1")))
+    vad = _truthy(request.form.get("vad_filter",
+                                  request.args.get("vad_filter", "1")))
+
+    f = request.files.get("file")
+    if f is None or not (f.filename or "").strip():
+        return {"error": "missing 'file': upload audio as multipart form field 'file'"}, 400
+    audio = f.read()
+    if not audio:
+        return {"error": "empty audio file"}, 400
+    if len(audio) > STT_MAX_BYTES:
+        return {"error": f"audio too large ({len(audio)} bytes): keep clips under 4MB"}, 413
+
+    out, err = _cf_stt(audio, language, word_ts, vad)
+    if err and language != STT_AUTO:
+        # Fallback keeps explicit-language requests working if the
+        # primary engine is throttled or unconfigured.
+        name = os.path.basename(f.filename or "audio").strip() or "audio"
+        name = re.sub(r"[^A-Za-z0-9._-]", "_", name)[-80:] or "audio"
+        out, err = _cartesia_stt(audio, name, f.mimetype or "audio/webm",
+                                 language, word_ts)
+    if err:
+        return {"error": err}, 502
     return out
 
 
