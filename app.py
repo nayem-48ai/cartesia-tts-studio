@@ -36,7 +36,31 @@ def enforce_canonical_host():
 
 TOKEN_URL = "https://backend.cartesia.ai/access-token/public"
 TTS_URL = "https://api.cartesia.ai/tts/bytes"
+STT_URL = "https://api.cartesia.ai/stt"
+STT_MODEL = "ink-whisper"
 API_VERSION = "2026-03-01"
+
+# ---- Speech-to-text (Cartesia Ink, same free token flow as TTS) ----
+# Vercel serverless requests cap at ~4.5MB, so uploads must stay small.
+STT_MAX_BYTES = 4 * 1024 * 1024
+STT_DEFAULT_LANG = "bn"
+STT_LANGS = (
+    "bn", "en", "hi", "ur", "es", "fr", "de", "ar", "ja", "ko", "pt",
+    "it", "nl", "pl", "zh", "ru", "tr", "vi", "id", "ms", "ta", "te",
+    "mr", "gu", "pa", "ml", "kn", "th", "tl", "uk", "he", "fa", "ne",
+    "si", "as",
+)
+STT_LANG_DISPLAY = {
+    "bn": "বাংলা", "en": "English", "hi": "हिन्दी", "ur": "اردو",
+    "es": "Spanish", "fr": "French", "de": "German", "ar": "Arabic",
+    "ja": "Japanese", "ko": "Korean", "pt": "Portuguese", "it": "Italian",
+    "nl": "Dutch", "pl": "Polish", "zh": "Chinese", "ru": "Russian",
+    "tr": "Turkish", "vi": "Vietnamese", "id": "Indonesian", "ms": "Malay",
+    "ta": "Tamil", "te": "Telugu", "mr": "Marathi", "gu": "Gujarati",
+    "pa": "Punjabi", "ml": "Malayalam", "kn": "Kannada", "th": "Thai",
+    "tl": "Tagalog", "uk": "Ukrainian", "he": "Hebrew", "fa": "Persian",
+    "ne": "Nepali", "si": "Sinhala", "as": "Assamese",
+}
 
 # Model support matrix verified live per language (sonic-2/3/3.5/turbo).
 MODELS_BY_LANG = {
@@ -265,7 +289,7 @@ def robots():
 
 @app.route("/sitemap.xml", methods=["GET"])
 def sitemap():
-    pages = [("/", "1.0"), ("/library", "0.8")]
+    pages = [("/", "1.0"), ("/library", "0.8"), ("/stt", "0.9")]
     lines = ['<?xml version="1.0" encoding="UTF-8"?>',
              '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
     for path, pri in pages:
@@ -295,6 +319,86 @@ def api_voices():
     lang = request.args.get("language", "en")
     voices = VOICES.get(lang, [])
     return {"language": lang, "count": len(voices), "voices": voices}
+
+
+@app.route("/stt", methods=["GET"])
+def stt_page():
+    return render_template("stt.html", site_url=request.url_root.rstrip("/"))
+
+
+@app.route("/api/stt/languages", methods=["GET"])
+def api_stt_languages():
+    langs = [{"code": c, "name": STT_LANG_DISPLAY.get(c, c)} for c in STT_LANGS]
+    return {"count": len(langs), "languages": langs, "default": STT_DEFAULT_LANG}
+
+
+def _truthy(v, default=True):
+    if v is None:
+        return default
+    return str(v).strip().lower() in ("1", "true", "yes", "on")
+
+
+@app.route("/api/stt", methods=["POST"])
+def api_stt():
+    # multipart form (file + options) so browsers AND realtime chunk
+    # recorders can POST audio directly, same style as /api/tts.
+    language = (request.form.get("language") or request.args.get("language")
+                or STT_DEFAULT_LANG).strip().lower()
+    if language not in STT_LANGS:
+        return {"error": f"unsupported language '{language}'"}, 400
+    word_ts = _truthy(request.form.get("word_timestamps",
+                                      request.args.get("word_timestamps", "1")))
+
+    f = request.files.get("file")
+    if f is None or not (f.filename or "").strip():
+        return {"error": "missing 'file': upload audio as multipart form field 'file'"}, 400
+    audio = f.read()
+    if not audio:
+        return {"error": "empty audio file"}, 400
+    if len(audio) > STT_MAX_BYTES:
+        return {"error": f"audio too large ({len(audio)} bytes): keep clips under 4MB"}, 413
+
+    name = os.path.basename(f.filename or "audio").strip() or "audio"
+    name = re.sub(r"[^A-Za-z0-9._-]", "_", name)[-80:] or "audio"
+    mime = f.mimetype or "audio/webm"
+
+    token = get_token()
+    boundary = "stt-%s" % secrets.token_hex(8)
+
+    def _field(nm, val):
+        return (f"--{boundary}\r\nContent-Disposition: form-data; "
+                f'name="{nm}"\r\n\r\n{val}\r\n').encode()
+
+    parts = [_field("model", STT_MODEL), _field("language", language)]
+    if word_ts:
+        parts.append(
+            (f"--{boundary}\r\nContent-Disposition: form-data; "
+             f'name="timestamp_granularities[]"\r\n\r\nword\r\n').encode())
+    parts.append(
+        (f"--{boundary}\r\nContent-Disposition: form-data; name=\"file\"; "
+         f'filename="{name}"\r\nContent-Type: {mime}\r\n\r\n').encode()
+        + audio + b"\r\n")
+    body = b"".join(parts) + f"--{boundary}--\r\n".encode()
+
+    req = urllib.request.Request(
+        STT_URL, data=body, method="POST",
+        headers={"Cartesia-Version": API_VERSION, "x-api-key": token,
+                 "Content-Type": f"multipart/form-data; boundary={boundary}"})
+    try:
+        with urllib.request.urlopen(req, timeout=120) as r:
+            data = json.load(r)
+    except urllib.error.HTTPError as e:
+        return {"error": f"STT error {e.code}: {e.read().decode()[:300]}"}, 502
+
+    out = {"text": (data.get("text") or "").strip(),
+           "language": data.get("language", language),
+           "duration": data.get("duration"),
+           "request_id": data.get("request_id")}
+    if word_ts and isinstance(data.get("words"), list):
+        out["words"] = [{"word": w.get("word"), "start": w.get("start"),
+                         "end": w.get("end")} for w in data["words"]]
+        out["word_count"] = len(out["words"])
+    return out
 
 
 @app.route("/api/tts", methods=["POST"])
@@ -404,7 +508,7 @@ def robots_txt():
 
 @app.route("/sitemap.xml", methods=["GET"])
 def sitemap_xml():
-    pages = ["/", "/library"]
+    pages = ["/", "/library", "/stt"]
     lines = ['<?xml version="1.0" encoding="UTF-8"?>',
              '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">']
     for p in pages:

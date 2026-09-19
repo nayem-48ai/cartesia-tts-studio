@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Speech to Text — TNxBD Studio (Free AI Transcription)</title>
+  <meta name="description" content="Free AI speech-to-text studio. Transcribe uploaded audio, live microphone recordings, or realtime speech into accurate text in 35 languages — Bangla, English, Hindi, Arabic and more. No API key needed." />
+  <meta name="keywords" content="speech to text, STT, audio to text, transcribe audio, free transcription, Bangla STT, voice to text, realtime transcription, Cartesia Ink" />
+  <meta name="author" content="TNxBD Studio" />
+  <meta name="robots" content="index, follow, max-image-preview:large" />
+  <meta name="theme-color" content="#6366f1" />
+  <link rel="icon" href="/static/favicon.png" type="image/png" />
+  <link rel="apple-touch-icon" href="/static/apple-touch-icon.png" />
+  <link rel="canonical" href="https://speakee.tnxbd.top/stt" />
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Speech to Text — TNxBD Studio" />
+  <meta property="og:description" content="Upload audio, record live, or transcribe realtime speech into accurate text in 35 languages. Free, no API key." />
+  <meta property="og:url" content="https://speakee.tnxbd.top/stt" />
+  <meta property="og:image" content="https://speakee.tnxbd.top/static/og-image.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="Speech to Text — TNxBD Studio" />
+  <meta name="twitter:description" content="Free AI transcription: upload, live mic, or realtime. 35 languages, no API key." />
+  <link rel="preload" as="font" type="font/woff2" href="/static/fonts/pjs-400.woff2" crossorigin />
+  <link rel="preload" as="font" type="font/woff2" href="/static/fonts/pjs-700.woff2" crossorigin />
+  <link rel="stylesheet" href="/static/fonts.css" />
+  <link rel="stylesheet" href="/static/tailwind.css" />
+  <script>
+    try {
+      var t = localStorage.getItem('theme');
+      var dark = (t === 'dark') || (!t && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      if (dark) document.documentElement.classList.add('dark');
+    } catch (e) {}
+  </script>
+  <style>
+    body { font-family: 'Plus Jakarta Sans', system-ui, sans-serif; }
+    .grad-text { background: linear-gradient(90deg,#6366f1,#10b981); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .spinner { width:14px; height:14px; border:2px solid rgba(99,102,241,.3); border-top-color:#6366f1; border-radius:50%; animation:spin .7s linear infinite; display:inline-block; }
+    @keyframes pulse-dot { 0%,100%{opacity:1} 50%{opacity:.35} }
+    .rec-dot { animation: pulse-dot 1.2s ease-in-out infinite; }
+    #liveBox { max-height: 260px; overflow-y: auto; }
+    #liveBox p { scroll-margin: 8px; }
+    .mode-tab[aria-selected="true"] { background:#fff; color:#4f46e5; box-shadow:0 1px 3px rgba(0,0,0,.12); }
+    .dark .mode-tab[aria-selected="true"] { background:#0f172a; color:#a5b4fc; }
+    details.acc summary::-webkit-details-marker { display: none; }
+    details.acc[open] .chev { transform: rotate(180deg); }
+    .chev { transition: transform .2s; }
+  </style>
+  <script type="application/ld+json">
+  {"@context":"https://schema.org","@type":"WebApplication","name":"TNxBD Studio Speech to Text",
+   "url":"https://speakee.tnxbd.top/stt","applicationCategory":"MultimediaApplication",
+   "offers":{"@type":"Offer","price":"0"},"description":"Free AI speech-to-text: upload audio, live mic, realtime transcription in 35 languages."}
+  </script>
+</head>
+<body class="bg-slate-50 text-slate-800 dark:bg-slate-950 dark:text-slate-100 transition-colors duration-200">
+<a href="#main" class="sr-only focus:not-sr-only" style="position:fixed;top:12px;left:12px;z-index:60;background:#fff;color:#4338ca;padding:8px 16px;border-radius:8px;box-shadow:0 4px 12px rgba(0,0,0,.15)">Skip to content</a>
+
+  <!-- Navbar -->
+  <nav class="sticky top-0 z-40 backdrop-blur bg-white/80 dark:bg-slate-950/80 border-b border-slate-200 dark:border-slate-800">
+    <div class="max-w-5xl mx-auto px-4 h-14 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2">
+        <svg class="w-7 h-7 text-brand-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M12 2a3 3 0 0 1 3 3v6a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3Z" stroke-linejoin="round"/><path d="M19 10v1a7 7 0 0 1-14 0v-1M12 18v3" stroke-linecap="round"/></svg>
+        <span class="font-extrabold text-lg tracking-tight">TNxBD <span class="text-brand-500">Studio</span></span>
+      </a>
+      <div class="flex items-center gap-2">
+        <a href="/" aria-label="Home" class="inline-flex items-center gap-1.5 text-slate-600 dark:text-slate-300 hover:text-brand-600 px-2 sm:px-3 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M3 10.5 12 3l9 7.5M5 9.5V20a1 1 0 0 0 1 1h4v-6h4v6h4a1 1 0 0 0 1-1V9.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="hidden sm:inline text-sm font-medium">Home</span>
+        </a>
+        <a href="/library" aria-label="Voice Library" class="inline-flex items-center gap-1.5 text-slate-600 dark:text-slate-300 hover:text-brand-600 px-2 sm:px-3 py-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors cursor-pointer">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M4 6h16M7 12h13M4 18h13" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="hidden sm:inline text-sm font-medium">Voice Library</span>
+        </a>
+        <a href="/stt" aria-label="Speech to Text" aria-current="page" class="inline-flex items-center gap-1.5 text-brand-600 dark:text-brand-300 bg-brand-50 dark:bg-brand-900/40 px-2 sm:px-3 py-1.5 rounded-lg cursor-pointer">
+          <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v4" stroke-linecap="round"/></svg>
+          <span class="hidden sm:inline text-sm font-medium">Speech to Text</span>
+        </a>
+        <button id="themeBtn" class="w-9 h-9 grid place-items-center rounded-lg text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 cursor-pointer" aria-label="Toggle theme">
+          <svg id="iconMoon" class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8Z" stroke-linejoin="round"/></svg>
+          <svg id="iconSun" class="w-5 h-5 hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M19 5l-1.5 1.5M6.5 17.5L5 19" stroke-linecap="round"/></svg>
+        </button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <header class="px-4 pt-10 pb-6">
+    <div class="max-w-3xl mx-auto text-center">
+      <span class="inline-flex items-center gap-2 text-sm font-semibold text-brand-600 dark:text-brand-300 bg-brand-50 dark:bg-brand-900/40 px-3 py-1 rounded-full border border-brand-100 dark:border-brand-800">
+        <span class="w-2 h-2 rounded-full bg-cta-500 rec-dot"></span> AI transcription · 35 languages
+      </span>
+      <h1 class="mt-4 text-4xl sm:text-5xl font-extrabold tracking-tight">
+        Turn speech into <span class="grad-text">accurate text</span>
+      </h1>
+      <p class="mt-3 max-w-2xl mx-auto text-slate-600 dark:text-slate-400 text-base sm:text-lg">
+        Upload an audio file, record live from your microphone, or transcribe realtime speech.
+        Professional-grade accuracy, free, no API key.
+      </p>
+    </div>
+  </header>
+
+  <!-- Studio Card -->
+  <main id="main" class="px-4 pb-14">
+    <div class="max-w-3xl mx-auto">
+      <div class="bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-xl p-5 sm:p-7">
+
+        <!-- Mode tabs -->
+        <div class="flex gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-xl" role="tablist" aria-label="Transcription mode">
+          <button id="tabUpload" role="tab" aria-selected="true" class="mode-tab flex-1 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400 transition-colors cursor-pointer">Upload audio</button>
+          <button id="tabLive" role="tab" aria-selected="false" class="mode-tab flex-1 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400 transition-colors cursor-pointer">Live mic</button>
+          <button id="tabRealtime" role="tab" aria-selected="false" class="mode-tab flex-1 rounded-lg px-3 py-2.5 text-sm font-semibold text-slate-600 dark:text-slate-400 transition-colors cursor-pointer">Realtime</button>
+        </div>
+
+        <!-- Language + options -->
+        <div class="mt-5 grid sm:grid-cols-2 gap-4">
+          <div>
+            <label for="langSel" class="block text-xs font-semibold text-slate-600 dark:text-slate-400 mb-1.5">Audio language</label>
+            <select id="langSel" class="w-full rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 px-3 py-2.5 text-sm focus:ring-2 focus:ring-brand-400 outline-none cursor-pointer"></select>
+          </div>
+          <div class="flex items-end pb-1">
+            <label class="inline-flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400 cursor-pointer select-none">
+              <input id="wordsChk" type="checkbox" checked class="w-4 h-4 accent-indigo-600 cursor-pointer" />
+              Word-level timestamps
+            </label>
+          </div>
+        </div>
+
+        <!-- Upload pane -->
+        <div id="paneUpload" class="mt-4">
+          <label for="fileInput" class="block rounded-2xl border-2 border-dashed border-slate-300 dark:border-slate-700 hover:border-brand-400 dark:hover:border-brand-500 transition-colors px-4 py-8 text-center cursor-pointer">
+            <svg class="mx-auto w-10 h-10 text-slate-600 dark:text-slate-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6"><path d="M12 16V4M7 9l5-5 5 5M4 20h16" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span id="fileLabel" class="mt-2 block text-sm font-semibold text-slate-700 dark:text-slate-200">Choose an audio file <span class="font-normal text-slate-600 dark:text-slate-500">(mp3, wav, ogg, webm, m4a — max 4MB)</span></span>
+            <input id="fileInput" type="file" accept="audio/*" class="hidden" />
+          </label>
+          <audio id="filePreview" controls class="mt-3 w-full hidden"></audio>
+          <button id="uploadBtn" class="mt-4 w-full cursor-pointer bg-brand-600 hover:bg-brand-700 active:bg-brand-800 text-white font-semibold rounded-xl py-3 flex items-center justify-center gap-2 transition-colors disabled:opacity-60">
+            <svg class="w-5 h-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 10a7 7 0 0 0 14 0M12 17v4" stroke-linecap="round"/></svg>
+            <span id="uploadLabel">Transcribe audio</span>
+          </button>
+        </div>
+
+        <!-- Live pane -->
+        <div id="paneLive" class="mt-4 hidden">
+          <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-5 text-center">
+            <div id="liveTimer" class="text-4xl font-extrabold tabular-nums tracking-tight">0:00</div>
+            <div class="mt-3 h-2 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden">
+              <div id="liveLevel" class="h-full w-0 bg-gradient-to-r from-brand-500 to-cta-500 transition-[width] duration-100"></div>
+            </div>
+            <p id="liveHint" class="mt-2 text-xs text-slate-600 dark:text-slate-500">Press record, speak, then stop — transcription starts automatically.</p>
+          </div>
+          <div class="mt-4 grid grid-cols-2 gap-3">
+            <button id="recBtn" class="cursor-pointer bg-red-500 hover:bg-red-600 active:bg-red-700 text-white font-semibold rounded-xl py-3 flex items-center justify-center gap-2 transition-colors disabled:opacity-60">
+              <span class="w-2.5 h-2.5 rounded-full bg-white rec-dot"></span><span id="recLabel">Record</span>
+            </button>
+            <button id="liveDl" class="cursor-pointer border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 font-semibold rounded-xl py-3 transition-colors disabled:opacity-50" disabled>Download .txt</button>
+          </div>
+          <audio id="livePreview" controls class="mt-3 w-full hidden"></audio>
+        </div>
+
+        <!-- Realtime pane -->
+        <div id="paneRealtime" class="mt-4 hidden">
+          <div class="rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800/60 p-4">
+            <div class="flex items-center justify-between">
+              <span id="rtStatus" class="inline-flex items-center gap-2 text-xs font-semibold text-slate-600 dark:text-slate-400">
+                <span id="rtDot" class="w-2 h-2 rounded-full bg-slate-400"></span><span id="rtStatusText">Idle — press Start and speak</span>
+              </span>
+              <span id="rtStats" class="text-[11px] font-medium text-slate-600 dark:text-slate-500 tabular-nums"></span>
+            </div>
+            <div id="liveBox" class="mt-3 min-h-[120px] rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 p-4 text-sm leading-relaxed" aria-live="polite">
+              <p class="text-slate-600 dark:text-slate-500">Live transcript will appear here…</p>
+            </div>
+          </div>
+          <div class="mt-4 grid grid-cols-2 gap-3">
+            <button id="rtBtn" class="cursor-pointer bg-cta-500 hover:bg-cta-600 active:bg-cta-700 text-white font-semibold rounded-xl py-3 flex items-center justify-center gap-2 transition-colors disabled:opacity-60">
+              <span class="w-2.5 h-2.5 rounded-full bg-white rec-dot"></span><span id="rtLabel">Start live</span>
+            </button>
+            <button id="rtDl" class="cursor-pointer border border-slate-300 dark:border-slate-700 hover:bg-slate-100 dark:hover:bg-slate-800 font-semibold rounded-xl py-3 transition-colors disabled:opacity-50" disabled>Download .txt</button>
+          </div>
+          <p class="mt-2.5 text-[11px] text-slate-600 dark:text-slate-500">Silent moments are skipped automatically, so noise never becomes text. Each ~4s speech chunk is transcribed like a mini API call — the same pattern developers use for realtime apps.</p>
+        </div>
+
+        <!-- Result -->
+        <div id="result" class="mt-5 hidden">
+          <div class="rounded-xl border border-cta-200 dark:border-cta-600/50 bg-cta-50 dark:bg-cta-600/10 p-4">
+            <div class="flex items-center justify-between gap-2">
+              <p class="text-sm font-semibold text-cta-700 dark:text-cta-400">Transcript ready</p>
+              <span id="sttMeta" class="text-[11px] font-medium text-slate-600 dark:text-slate-400 tabular-nums"></span>
+            </div>
+            <p id="sttText" class="mt-2 text-sm leading-relaxed whitespace-pre-wrap"></p>
+            <details id="wordsBox" class="mt-3 hidden">
+              <summary class="text-xs font-semibold text-brand-600 dark:text-brand-300 cursor-pointer">Word timestamps</summary>
+              <div id="wordsList" class="mt-2 max-h-40 overflow-y-auto text-xs font-mono text-slate-600 dark:text-slate-400 space-y-0.5"></div>
+            </details>
+            <div class="mt-3 flex flex-wrap gap-2">
+              <button id="copyBtn" class="cursor-pointer inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 dark:text-brand-300 hover:text-brand-700 px-3 py-2 rounded-lg hover:bg-brand-50 dark:hover:bg-slate-800 transition-colors">Copy text</button>
+              <button id="dlBtn" class="cursor-pointer inline-flex items-center gap-1.5 text-sm font-semibold text-brand-600 dark:text-brand-300 hover:text-brand-700 px-3 py-2 rounded-lg hover:bg-brand-50 dark:hover:bg-slate-800 transition-colors">Download .txt</button>
+            </div>
+          </div>
+        </div>
+
+        <div id="errorBox" class="mt-4 hidden rounded-xl border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/20 p-3 text-sm text-red-700 dark:text-red-300"></div>
+      </div>
+
+      <!-- API section -->
+      <section class="mt-8 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-lg p-5 sm:p-7">
+        <details id="apiDetails" class="acc group">
+          <summary class="flex items-center gap-2.5 text-slate-700 dark:text-slate-200 cursor-pointer list-none">
+            <svg class="w-6 h-6 text-brand-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7"><path d="M8 6L3 12l5 6M16 6l5 6-5 6M14 4l-4 16" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <h2 class="text-lg font-bold">Developer API</h2>
+            <span class="ml-auto text-xs font-semibold text-slate-600 bg-slate-100 dark:bg-slate-800 px-2.5 py-1 rounded-full">POST /api/stt</span>
+            <svg class="chev w-5 h-5 text-slate-600" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M6 9l6 6 6-6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </summary>
+          <div class="mt-4 space-y-4">
+            <div class="rounded-xl border border-amber-200 dark:border-amber-700/60 bg-amber-50 dark:bg-amber-900/20 p-4">
+              <div class="flex items-center justify-between">
+                <p class="text-xs font-semibold uppercase tracking-wide text-amber-600 dark:text-amber-400">Security check</p>
+                <span id="verifyBadge" class="hidden inline-flex items-center gap-1 text-xs font-semibold text-cta-600 dark:text-cta-400">
+                  <svg class="w-3.5 h-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><path d="M5 13l4 4L19 7" stroke-linecap="round" stroke-linejoin="round"/></svg> Verified
+                </span>
+              </div>
+              <p class="mt-1 text-sm text-slate-600 dark:text-slate-300">Solve this to reveal the copy-ready cURL.</p>
+              <div class="mt-3 flex flex-wrap items-center gap-3">
+                <span id="challengeQ" class="text-lg font-bold text-slate-800 dark:text-slate-100 tabular-nums">—</span>
+                <input id="challengeA" type="text" inputmode="numeric" autocomplete="off" placeholder="?" class="w-16 rounded-lg border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 px-3 py-2 text-center text-sm outline-none focus:ring-2 focus:ring-amber-400" />
+                <button id="verifyBtn" class="cursor-pointer inline-flex items-center gap-1.5 text-sm font-semibold text-amber-950 bg-amber-500 hover:bg-amber-600 px-3.5 py-2 rounded-lg transition-colors">Verify</button>
+                <button id="refreshChallenge" class="cursor-pointer text-sm font-semibold text-slate-600 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 px-2 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors" title="New challenge">New</button>
+                <span id="challengeStatus" class="text-sm font-medium"></span>
+              </div>
+            </div>
+            <div id="apiLocked" class="flex items-center gap-2 text-sm text-slate-600">
+              <svg class="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect x="5" y="11" width="14" height="9" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3" stroke-linecap="round"/></svg>
+              Complete the security check above to view the request.
+            </div>
+            <div id="apiReveal" class="hidden space-y-3">
+              <div class="text-xs text-slate-600 dark:text-slate-400 leading-relaxed">
+                <span class="font-semibold text-slate-700 dark:text-slate-200">Upload / chunked realtime</span>
+                (multipart audio, max 4MB per request):
+                <code class="font-mono">file</code> (required) ·
+                <code class="font-mono">language</code> (default bn) ·
+                <code class="font-mono">word_timestamps</code> 1/0 (default 1).
+                For realtime apps, POST one ~4s speech chunk at a time and append each <code class="font-mono">.text</code>.
+              </div>
+              <div>
+                <div class="flex items-center justify-between mb-1.5">
+                  <span class="text-xs font-semibold text-slate-600 uppercase tracking-wide">Request</span>
+                  <button id="copyCurl" class="inline-flex items-center gap-1 text-xs font-semibold text-brand-600 dark:text-brand-300 hover:text-brand-700 px-2 py-1 rounded-lg hover:bg-brand-50 dark:hover:bg-slate-800 transition-colors cursor-pointer">Copy</button>
+                </div>
+                <pre class="text-xs bg-slate-900 text-slate-100 rounded-xl p-4 overflow-x-auto"><code id="apiSnippet"></code></pre>
+              </div>
+              <div>
+                <span class="text-xs font-semibold text-slate-600 uppercase tracking-wide">Response</span>
+                <pre class="mt-1.5 text-xs bg-slate-900 text-slate-100 rounded-xl p-4 overflow-x-auto"><code># Success → HTTP 200, JSON:
+{
+  "text": "transcribed sentence here",
+  "language": "bn",
+  "duration": 4.36,
+  "request_id": "0d6b1c29-…",
+  "words": [{"word": "Hello", "start": 0.0, "end": 0.4}],
+  "word_count": 9
+}
+# Error → HTTP 4xx / 5xx, JSON: {"error": "…"}</code></pre>
+              </div>
+            </div>
+          </div>
+        </details>
+      </section>
+
+      <!-- FAQ -->
+      <section class="mt-8 bg-white dark:bg-slate-900 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-lg p-5 sm:p-7">
+        <h2 class="text-lg font-bold">Questions</h2>
+        <div class="mt-3 space-y-4 text-sm">
+          <div><h3 class="font-semibold">Is speech to text free?</h3>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">Yes. Upload, live recording and realtime transcription are all free with no API key — the server uses the same free transcription flow as the TTS studio.</p></div>
+          <div><h3 class="font-semibold">Which languages can it transcribe?</h3>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">35 languages including Bangla, English, Hindi, Urdu, Arabic, Spanish, French, German, Japanese, Turkish and more. Pick the spoken language before transcribing for best accuracy.</p></div>
+          <div><h3 class="font-semibold">Is there a size limit?</h3>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">Each request accepts up to 4MB of audio (roughly a few minutes depending on format). For longer recordings, realtime mode transcribes chunk by chunk with no total limit.</p></div>
+          <div><h3 class="font-semibold">How do I use the STT API?</h3>
+            <p class="mt-1 text-slate-600 dark:text-slate-400">POST an audio file as multipart form field <span class="font-mono">file</span> to <span class="font-mono">/api/stt</span> with <span class="font-mono">language</span>. You get JSON back with text, duration and optional word timestamps. A copy-ready example is in the Developer API box above.</p></div>
+        </div>
+      </section>
+
+      <footer class="mt-8 text-center text-xs text-slate-600 dark:text-slate-500">
+        TNxBD Studio · Speech to Text · <span id="year"></span>
+      </footer>
+    </div>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const saveSel = (k, v) => { try { localStorage.setItem(k, v); } catch (e) {} };
+    const getSel = (k) => { try { return localStorage.getItem(k); } catch (e) { return null; } };
+    const MAX_BYTES = 4 * 1024 * 1024;
+
+    function showError(msg) { const e = $('errorBox'); e.textContent = msg; e.classList.remove('hidden'); }
+    function hideError() { $('errorBox').classList.add('hidden'); }
+    function setBusy(btn, labelEl, on, idle, busy) {
+      btn.disabled = on;
+      if (on) { const s = document.createElement('span'); s.className = 'spinner'; s.id = btn.id + '-spin'; btn.prepend(s); }
+      else { const s = $(btn.id + '-spin'); if (s) s.remove(); }
+      if (labelEl) $(labelEl).textContent = on ? busy : idle;
+    }
+    function copyText(text, btn) {
+      navigator.clipboard.writeText(text).then(() => {
+        const old = btn.textContent; btn.textContent = 'Copied!';
+        setTimeout(() => { btn.textContent = old; }, 1400);
+      }).catch(() => {});
+    }
+    function downloadText(text, name) {
+      const url = URL.createObjectURL(new Blob([text], { type: 'text/plain;charset=utf-8' }));
+      const a = document.createElement('a'); a.href = url; a.download = name;
+      document.body.appendChild(a); a.click(); a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 4000);
+    }
+
+    // ---- Languages ----
+    async function loadSttLanguages() {
+      let langs = [], def = 'bn';
+      try {
+        const r = await fetch('/api/stt/languages').then(x => x.json());
+        langs = r.languages || []; def = r.default || 'bn';
+      } catch (e) { langs = [{ code: 'bn', name: 'বাংলা' }, { code: 'en', name: 'English' }]; }
+      const sel = $('langSel'); sel.innerHTML = '';
+      langs.forEach(l => { const o = document.createElement('option'); o.value = l.code; o.textContent = l.name; sel.appendChild(o); });
+      const saved = getSel('stt_lang');
+      sel.value = (saved && [...sel.options].some(o => o.value === saved)) ? saved : def;
+      updateSnippet();
+    }
+
+    // ---- Tabs ----
+    const panes = { tabUpload: 'paneUpload', tabLive: 'paneLive', tabRealtime: 'paneRealtime' };
+    function selectTab(id) {
+      Object.keys(panes).forEach(t => {
+        $(t).setAttribute('aria-selected', t === id ? 'true' : 'false');
+        $(panes[t]).classList.toggle('hidden', t !== id);
+      });
+      hideError();
+    }
+    Object.keys(panes).forEach(t => $(t).addEventListener('click', () => selectTab(t)));
+
+    // ---- Shared API call: one audio blob = one transcript ----
+    async function transcribeBlob(blob, filename) {
+      const fd = new FormData();
+      fd.append('file', blob, filename);
+      fd.append('language', $('langSel').value);
+      fd.append('word_timestamps', $('wordsChk').checked ? '1' : '0');
+      const res = await fetch('/api/stt', { method: 'POST', body: fd });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || ('Request failed (' + res.status + ')'));
+      return data;
+    }
+    function cleanText(t) { return (t || '').replace(/\s+/g, ' ').trim(); }
+
+    function renderResult(data) {
+      const text = cleanText(data.text);
+      if (!text) { showError('No speech detected in that audio. Try a louder, clearer clip.'); return false; }
+      $('sttText').textContent = text;
+      const dur = (data.duration !== undefined && data.duration !== null) ? Number(data.duration).toFixed(1) + 's' : '—';
+      const wc = data.word_count !== undefined ? data.word_count + ' words' : '';
+      $('sttMeta').textContent = `${data.language || ''} · ${dur}${wc ? ' · ' + wc : ''}`;
+      if (Array.isArray(data.words) && data.words.length) {
+        $('wordsBox').classList.remove('hidden');
+        $('wordsList').innerHTML = data.words.map(w =>
+          `<div>${(w.start !== undefined ? Number(w.start).toFixed(2) : '?')}–${(w.end !== undefined ? Number(w.end).toFixed(2) : '?')}s&nbsp;&nbsp;${String(w.word || '').replace(/</g, '&lt;')}</div>`
+        ).join('');
+      } else { $('wordsBox').classList.add('hidden'); $('wordsList').innerHTML = ''; }
+      $('result').classList.remove('hidden');
+      return true;
+    }
+
+    // ---- Upload mode ----
+    let uploadBlob = null, uploadName = 'audio';
+    $('fileInput').addEventListener('change', () => {
+      hideError(); $('result').classList.add('hidden');
+      const f = $('fileInput').files[0];
+      if (!f) return;
+      if (f.size > MAX_BYTES) { showError('File is too large (' + (f.size / 1048576).toFixed(1) + 'MB). Keep clips under 4MB.'); $('fileInput').value = ''; return; }
+      uploadBlob = f; uploadName = f.name || 'audio';
+      $('fileLabel').innerHTML = '<span class="font-mono">' + String(uploadName).replace(/</g, '&lt;') + '</span> · ' + (f.size / 1024).toFixed(0) + ' KB — choose another?';
+      const url = URL.createObjectURL(f);
+      $('filePreview').src = url; $('filePreview').classList.remove('hidden');
+    });
+    $('uploadBtn').addEventListener('click', async () => {
+      hideError(); $('result').classList.add('hidden');
+      if (!uploadBlob) { showError('Choose an audio file first.'); return; }
+      setBusy($('uploadBtn'), 'uploadLabel', true, 'Transcribe audio', 'Transcribing…');
+      try { renderResult(await transcribeBlob(uploadBlob, uploadName)); }
+      catch (e) { showError(e.message); }
+      finally { setBusy($('uploadBtn'), 'uploadLabel', false, 'Transcribe audio'); }
+    });
+
+    // ---- Mic helpers (level meter + energy gate keep noise out) ----
+    let micStream = null, analyser = null, audioCtx = null;
+    async function openMic() {
+      if (micStream) return micStream;
+      micStream = await navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: true, noiseSuppression: true } });
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const src = audioCtx.createMediaStreamSource(micStream);
+      analyser = audioCtx.createAnalyser(); analyser.fftSize = 1024;
+      src.connect(analyser);
+      return micStream;
+    }
+    function micEnergy() {
+      if (!analyser) return 1;
+      const b = new Uint8Array(analyser.frequencyBinCount);
+      analyser.getByteTimeDomainData(b);
+      let sum = 0;
+      for (let i = 0; i < b.length; i++) { const v = (b[i] - 128) / 128; sum += v * v; }
+      return Math.sqrt(sum / b.length);
+    }
+    function closeMic() {
+      try { if (micStream) micStream.getTracks().forEach(t => t.stop()); } catch (e) {}
+      try { if (audioCtx) audioCtx.close(); } catch (e) {}
+      micStream = null; analyser = null; audioCtx = null;
+    }
+    function fmtTime(s) { s = Math.floor(s); return Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0'); }
+
+    // ---- Live mode: record, stop, auto-transcribe ----
+    let liveRec = null, liveChunks = [], liveSecs = 0, liveTick = null, liveLevelTick = null;
+    $('recBtn').addEventListener('click', async () => {
+      hideError();
+      if (liveRec) { // stop
+        liveRec.stop();
+        return;
+      }
+      $('result').classList.add('hidden'); $('livePreview').classList.add('hidden');
+      try { await openMic(); }
+      catch (e) { showError('Microphone blocked. Allow mic access in the browser and try again.'); return; }
+      liveChunks = []; liveSecs = 0;
+      $('liveTimer').textContent = '0:00';
+      try { liveRec = new MediaRecorder(micStream); }
+      catch (e) { showError('Recording is not supported in this browser. Try Chrome or Edge.'); closeMic(); return; }
+      liveRec.ondataavailable = (e) => { if (e.data && e.data.size) liveChunks.push(e.data); };
+      liveRec.onstop = async () => {
+        clearInterval(liveTick); clearInterval(liveLevelTick);
+        $('recLabel').textContent = 'Record';
+        $('liveLevel').style.width = '0%';
+        const blob = new Blob(liveChunks, { type: liveRec.mimeType || 'audio/webm' });
+        liveRec = null; closeMic();
+        if (!blob.size) { showError('Empty recording — nothing captured.'); return; }
+        const url = URL.createObjectURL(blob);
+        $('livePreview').src = url; $('livePreview').classList.remove('hidden');
+        setBusy($('recBtn'), 'recLabel', true, 'Record', 'Transcribing…');
+        try {
+          if (renderResult(await transcribeBlob(blob, 'live-recording.webm'))) $('liveDl').disabled = false;
+        } catch (e) { showError(e.message); }
+        finally { setBusy($('recBtn'), 'recLabel', false, 'Record'); }
+      };
+      liveRec.start();
+      $('recLabel').textContent = 'Stop';
+      liveTick = setInterval(() => { liveSecs++; $('liveTimer').textContent = fmtTime(liveSecs); }, 1000);
+      liveLevelTick = setInterval(() => { $('liveLevel').style.width = Math.min(100, micEnergy() * 400) + '%'; }, 120);
+    });
+    $('liveDl').addEventListener('click', () => downloadText($('sttText').textContent, 'transcript.txt'));
+
+    // ---- Realtime mode: speech chunks -> sequential transcripts, silence skipped ----
+    let rtRec = null, rtQueue = Promise.resolve(), rtChunks = 0, rtWords = 0, rtActive = false;
+    const CHUNK_MS = 4000, ENERGY_MIN = 0.015, SIZE_MIN = 6000;
+    function rtPaint() { $('rtStats').textContent = rtChunks ? (rtChunks + ' chunks · ' + rtWords + ' words') : ''; }
+    function rtAppend(text) {
+      const box = $('liveBox');
+      if (box.querySelector('p.text-slate-600, p.text-slate-500, p.dark\\:text-slate-500')) box.innerHTML = '';
+      const p = document.createElement('p');
+      p.className = 'py-1 border-b border-slate-100 dark:border-slate-800 last:border-0';
+      p.textContent = text;
+      box.appendChild(p); box.scrollTop = box.scrollHeight;
+      $('rtDl').disabled = false;
+    }
+    function rtSetLive(on) {
+      $('rtDot').className = 'w-2 h-2 rounded-full ' + (on ? 'bg-red-500 rec-dot' : 'bg-slate-400');
+      $('rtStatusText').textContent = on ? 'Listening… speak now' : 'Idle — press Start and speak';
+      $('rtLabel').textContent = on ? 'Stop' : 'Start live';
+    }
+    $('rtBtn').addEventListener('click', async () => {
+      hideError();
+      if (rtActive) {
+        rtActive = false;
+        try { if (rtRec && rtRec.state !== 'inactive') rtRec.stop(); } catch (e) {}
+        closeMic(); rtSetLive(false);
+        $('rtStatusText').textContent = 'Finalizing last chunk…';
+        await rtQueue;
+        $('rtStatusText').textContent = 'Done — press Start to transcribe more';
+        return;
+      }
+      try { await openMic(); }
+      catch (e) { showError('Microphone blocked. Allow mic access in the browser and try again.'); return; }
+      if (!window.MediaRecorder) { showError('Realtime recording is not supported in this browser. Try Chrome or Edge.'); closeMic(); return; }
+      rtActive = true; rtChunks = 0; rtWords = 0; rtPaint();
+      $('liveBox').innerHTML = '<p class="text-slate-600 dark:text-slate-500">Listening…</p>';
+      rtSetLive(true);
+      rtRec = new MediaRecorder(micStream);
+      rtRec.ondataavailable = (e) => {
+        const blob = e.data;
+        if (!rtActive || !blob || !blob.size) return;
+        const energy = micEnergy();
+        if (blob.size < SIZE_MIN && energy < ENERGY_MIN) return; // silence/noise gate
+        rtQueue = rtQueue.then(async () => {
+          try {
+            const d = await transcribeBlob(blob, 'live-chunk.webm');
+            const text = cleanText(d.text);
+            if (!text) return; // skip empties: no noise, no duplicates
+            rtChunks++;
+            rtWords += (d.word_count !== undefined ? d.word_count : text.split(/\s+/).length);
+            rtPaint(); rtAppend(text);
+          } catch (err) { /* keep session alive; surface only auth/server errors */
+            if (/4\d\d|5\d\d/.test(err.message)) showError(err.message);
+          }
+        });
+      };
+      rtRec.start(CHUNK_MS);
+    });
+    $('rtDl').addEventListener('click', () => {
+      const lines = [...$('liveBox').querySelectorAll('p')].map(p => p.textContent);
+      downloadText(lines.join('\n'), 'live-transcript.txt');
+    });
+
+    // ---- Result actions ----
+    $('copyBtn').addEventListener('click', () => copyText($('sttText').textContent, $('copyBtn')));
+    $('dlBtn').addEventListener('click', () => downloadText($('sttText').textContent, 'transcript.txt'));
+    $('langSel').addEventListener('change', () => { saveSel('stt_lang', $('langSel').value); updateSnippet(); });
+    $('wordsChk').addEventListener('change', updateSnippet);
+
+    // ---- Captcha-gated API docs (same style as TTS) ----
+    let challengeToken = '';
+    const VFY_KEY = 'tnxbd_vfy';
+    function setVerified(ttl) { try { localStorage.setItem(VFY_KEY, JSON.stringify({ exp: Date.now() + ttl * 1000 })); } catch (e) {} }
+    function isVerified() { try { const v = JSON.parse(localStorage.getItem(VFY_KEY) || '{}'); return v.exp && v.exp > Date.now(); } catch (e) { return false; } }
+    function updateSnippet() {
+      const lang = ($('langSel') && $('langSel').value) || 'bn';
+      const wt = ($('wordsChk') && $('wordsChk').checked) ? '1' : '0';
+      const el = $('apiSnippet');
+      if (el) el.textContent =
+`# Upload a file
+curl -X POST ${location.origin}/api/stt \\
+  -F "file=@speech.mp3" \\
+  -F "language=${lang}" \\
+  -F "word_timestamps=${wt}"
+
+# Realtime: POST one ~4s speech chunk at a time, append each .text
+curl -X POST ${location.origin}/api/stt \\
+  -F "file=@chunk.webm;type=audio/webm" \\
+  -F "language=${lang}"`;
+    }
+    function revealApi() {
+      $('apiLocked').classList.add('hidden');
+      $('apiReveal').classList.remove('hidden');
+      $('verifyBadge').classList.remove('hidden');
+      updateSnippet();
+    }
+    async function loadChallenge() {
+      try {
+        const r = await fetch('/api/challenge').then(x => x.json());
+        challengeToken = r.token;
+        $('challengeQ').textContent = r.question + ' = ?';
+        $('challengeA').value = '';
+        $('challengeStatus').textContent = '';
+        $('challengeStatus').className = 'text-sm font-medium';
+      } catch (e) { $('challengeQ').textContent = '? + ? = ?'; }
+    }
+    async function verifyChallenge() {
+      const ans = $('challengeA').value.trim();
+      if (!ans) { $('challengeStatus').textContent = 'Enter the answer.'; $('challengeStatus').className = 'text-sm font-medium text-amber-600 dark:text-amber-400'; return; }
+      try {
+        const r = await fetch('/api/challenge/verify', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: challengeToken, answer: ans })
+        }).then(x => x.json());
+        if (r.error) { $('challengeStatus').textContent = r.error; $('challengeStatus').className = 'text-sm font-medium text-red-500'; return; }
+        $('challengeStatus').textContent = 'Verified ✓';
+        $('challengeStatus').className = 'text-sm font-medium text-cta-600 dark:text-cta-400';
+        setVerified(r.ttl || 600);
+        revealApi();
+      } catch (e) { $('challengeStatus').textContent = 'Network error.'; }
+    }
+    $('verifyBtn').addEventListener('click', verifyChallenge);
+    $('refreshChallenge').addEventListener('click', loadChallenge);
+    $('challengeA').addEventListener('keydown', (e) => { if (e.key === 'Enter') verifyChallenge(); });
+    $('copyCurl').addEventListener('click', () => copyText($('apiSnippet').textContent, $('copyCurl')));
+
+    // ---- Theme ----
+    const themeBtn = $('themeBtn');
+    function applyTheme(dark) {
+      document.documentElement.classList.toggle('dark', dark);
+      $('iconMoon').classList.toggle('hidden', dark);
+      $('iconSun').classList.toggle('hidden', !dark);
+    }
+    themeBtn.addEventListener('click', () => {
+      const dark = !document.documentElement.classList.contains('dark');
+      applyTheme(dark);
+      try { localStorage.setItem('theme', dark ? 'dark' : 'light'); } catch (e) {}
+    });
+    (function () {
+      let saved = null;
+      try { saved = localStorage.getItem('theme'); } catch (e) {}
+      applyTheme((saved === 'dark') || (saved === null && window.matchMedia('(prefers-color-scheme: dark)').matches));
+    })();
+
+    $('year').textContent = new Date().getFullYear();
+    if (isVerified()) { revealApi(); } else { loadChallenge(); }
+    loadSttLanguages();
+  </script>
+</body>
+</html>

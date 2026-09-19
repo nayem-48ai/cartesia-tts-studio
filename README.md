@@ -41,6 +41,27 @@ curl -X POST https://tnxbd-tts.vercel.app/api/tts \
   }'
 ```
 
+## Speech to Text (`/stt`)
+
+Same free token flow as TTS (no API key), powered by Cartesia `ink-whisper`.
+
+- Web UI (`/stt`): upload audio, live mic record, or realtime chunked
+  transcription — 35 languages (default Bangla), word timestamps, copy +
+  download `.txt`. Silent chunks are skipped automatically.
+- API: `POST /api/stt` (multipart, max 4MB per request) →
+  `{text, language, duration, request_id, words, word_count}`.
+  `GET /api/stt/languages` lists the 35 languages.
+
+```bash
+# Upload a file
+curl -X POST https://speakee.tnxbd.top/api/stt \
+  -F "file=@speech.mp3" -F "language=bn" -F "word_timestamps=1"
+
+# Realtime: POST one ~4s speech chunk at a time, append each .text
+curl -X POST https://speakee.tnxbd.top/api/stt \
+  -F "file=@chunk.webm;type=audio/webm" -F "language=en"
+```
+
 ## Deployment
 - **Live (Vercel):** https://tnxbd-tts.vercel.app (project renamed from the
   original `cartesia-tts-studio`).
